@@ -1,0 +1,21 @@
+@import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap');
+*{margin: 0px;padding: 0px;}
+
+body{
+   font-family: "Lato", sans-serif;
+}
+.bg-aqua{background-color:  #002f3d ;}
+.headerWrapper .top-strip{padding: 12px 0px;}
+.headerWrapper .top-strip p{color: #fff; font-size: 14px; font-weight: 700;}
+.headerWrapper .header{width: 100%; height:auto; padding: 20px 0px; }
+.logoWrapper img{width: 100%;}
+         
+/* CountryDropdown */
+.headerWrapper .header .part2 .countrydrop{width: 150px;     height:60px;  min-width: 150px;  color: #000;  border:1px solid rgba(0,0,0,0.4);      border-radius:7px;     text-align: left;    justify-content: flex-start; padding: 10px 10px;}
+.headerWrapper .header .part2 .countrydrop .label{font-size: 12px;  text-transform: capitalize !important;
+color:rgba(0,0,0,0.5);  line-height: 18px;}
+.headerWrapper .header .part2 .countrydrop .name{font-size: 12px;text-transform: capitalize !important;
+color:#006970; line-height: 18px; font-weight: 700;}
+.headerWrapper .header .part2 .countrydrop span ml-auto svg{opacity: 0.7;}
+
+/* Header Search Bar*/
