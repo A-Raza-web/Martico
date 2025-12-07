@@ -59,7 +59,7 @@ border-radius: 50%; display: flex; color: #fff; }
 nav .navbar {  max-width: 1200px;  margin: 0 auto; }
 nav .allCatTab{background: linear-gradient(90deg, #006970, #2DE1C2); padding:10px 20px; border-radius: 20px;}
 nav .allCatTab *{color: #fff;}
-nav .allCatTab .text {font-weight: 600;}
+nav .allCatTab .text {font-size: 12px; font-weight: 600;}
 nav .allCatTab .icon1 svg {font-size: 20px;}
 nav .allCatTab .icon2 svg {font-size: 15px;}
 nav .navPart2 ul{margin-bottom: 0px;}
@@ -156,7 +156,7 @@ nav .navPart2 ul li:hover .subMenu {opacity: 1; visibility: inherit; top:136%}
 }
 
 .list-line-items a:hover::after {
-  width: 80%;
+  width: 85%;
 }
 
 .list-line-items svg {

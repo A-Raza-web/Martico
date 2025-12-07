@@ -1,5 +1,6 @@
 import Button from '@mui/material/Button';
-import img from "../../../assets/images/sideHome.jpg";
+import List2 from '../List2/index'
+import img1 from "../../../assets/images/sideHome.jpg";
 import pro from '../../../assets/images/pro.jpg';
 import { IoArrowForward } from "react-icons/io5";
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -93,9 +94,10 @@ const List1 = () => {
           {/* Left banner */}
           <div className="col-md-3">
             <div className="banner shadow-sm rounded overflow-hidden">
-              <img src={img} alt="side banner" className="img-fluid cursor" />
+              <img src={img1} alt="side banner" className="img-fluid cursor" />
             </div>
           </div>
+          
 
           {/* Product list */}
           <div className="col-md-9 ProductsRow">
@@ -181,6 +183,7 @@ const List1 = () => {
               </Swiper>
             </div>
           </div>
+          <List2 />
         </div>
       </div>
     </section>
