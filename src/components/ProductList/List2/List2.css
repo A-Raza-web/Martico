@@ -5,6 +5,22 @@
   gap: 22px; /* spacing between items */
 }
 
+/* Sticky Sidebar */
+.sticky-sidebar {
+  position: sticky;
+  top: 50px;      
+  z-index: 20;
+  height: fit-content;
+}
+
+/* Prevent parent overflow issues */
+.homeProducts,
+.container,
+.row,
+.col-md-3 {
+  overflow: visible !important;
+}
+
 /* Product Card */
 .productCard {
   flex: 0 0 calc(25% - 20px); /* 4 items per row */
@@ -13,6 +29,7 @@
   border-radius: 7px !important;
   overflow: hidden;
   transition: transform 0.3s, box-shadow 0.3s;
+  margin-left: 2px;
   cursor: pointer;
 }
 
@@ -38,7 +55,7 @@
   position: absolute;
   top: 10px;
   left: 10px;
-  background: #2DE1C2;
+  background: var(--teal-light);
   color: #fff;
   font-size: 14px;
   font-weight: 500;
@@ -120,6 +137,9 @@
   color: #e63946;
   font-weight: 600;
   font-size: 16px;
+}
+.bannerSec{
+  gap:10px;
 }
 
 /* Responsive */

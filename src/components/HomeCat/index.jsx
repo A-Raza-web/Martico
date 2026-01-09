@@ -34,19 +34,10 @@ const colors = [
   "#EAF4FF",  // sky blue
   "#FFF3E8",  // light orange
   "#E4F9F5",  // mint light
-  "#FFEAF4",  // light pink
-  "#FFF9E6",  // cream yellow
   "#E6F7FF",  // baby blue
-  "#F5E8FF",  // soft violet
-  "#FFECEC",  // soft rose
-  "#E8FFE8",  // soft green
-  "#F9E8D9",  // milk coffee
-  "#FDEBFF",  // pastel lavender
-  "#EAF0FF",  // crystal blue
   "#FFF1F0",  // blush white
   "#EDF9FF",  // ice blue
   "#FFF7FB",  // cotton pink
-  "#F3FFE6",  // lemon mist
   "#FFEFF5",  // strawberry cream
   "#E9FFFD",  // aqua milk
   "#FDF5FF",  // orchid tint

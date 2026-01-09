@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import Button from '@mui/material/Button';
-import List2 from '../List2/index'
 import img1 from "../../../assets/images/banner1.jpg";
 import pro from '../../../assets/images/pro.jpg';
 import { IoArrowForward } from "react-icons/io5";
@@ -110,21 +109,12 @@ const List1 = () => {
       <div className="container">
         <div className="row">
 
-          {/* Left banner */}
-          <div className="col-md-3">
-            <div className="banner shadow-sm rounded overflow-hidden">
-              <img src={img1} alt="side banner" className="img-fluid cursor" />
-            </div>
-          </div>
-
           {/* Product list */}
-          <div className="col-md-9 ProductsRow">
+          <div className="col-md-12 ProductsRow">
             <div className="d-flex align-items-center mb-3">
               <div className="info w-75 ml-4">
-                <h3 className="mb-0 hd">BEST SELLERS</h3>
-                <p className="text-color text-sml mb-0">
-                  Do not miss the current offers until the end of March.
-                </p>
+                <h3 className="mb-0 hd"> RELATED PRODUCTS</h3>
+               
               </div>
               <Button
                 className='viewAllBtn ml-auto'
@@ -206,7 +196,6 @@ const List1 = () => {
             </div>
           </div>
 
-          <List2 />
         </div>
 
         {/*  PRODUCT MODAL COMPONENT */}

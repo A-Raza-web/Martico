@@ -126,7 +126,7 @@ const Countrydorp = () => {
             <Button
               onClick={handleClose}
               variant="outlined"
-              className="closeBtn"
+              className="closeBtn1"
             >
               Close
             </Button>
