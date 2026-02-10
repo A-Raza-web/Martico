@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const CategorySchema = new mongoose.Schema({
-  img: { type: String, trim: true },
+  image: [{ type: String, trim: true }], // Array of image URLs
   name: { type: String, required: true, trim: true },
   color: { type: String, trim: true }
 }, {

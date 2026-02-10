@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Product = require('../models/product');
-const { upload, cloudinaryUtils } = require('../utils/cloudinary');
+const { upload, cloudinary: cloudinaryUtils } = require('../utils/cloudinary');
 const { rateLimiter } = require('../utils/rateLimiter');
 
 // GET / -> list all products with pagination and filtering
@@ -116,37 +116,6 @@ router.post('/create', upload.single('image'), async (req, res) => {
   }
 });
 
-// POST /bulk -> create multiple products with concurrent processing
-router.post('/bulk/create', async (req, res) => {
-  try {
-    const { products } = req.body;
-
-    if (!Array.isArray(products) || products.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Products array is required'
-      });
-    }
-
-    // Use p-limit for concurrent product creation
-    const createProductFunctions = products.map(productData => async () => {
-      const newProduct = new Product(productData);
-      return await newProduct.save();
-    });
-
-    const results = await rateLimiter.limitDbOperations(createProductFunctions);
-
-    res.status(201).json({
-      success: true,
-      data: results,
-      message: `${results.length} products created successfully`
-    });
-  } catch (err) {
-    console.error('Error bulk creating products:', err);
-    res.status(500).json({ success: false, message: 'Server error' });
-  }
-});
-
 // PUT /:id -> update a product
 router.put('/:id', upload.single('image'), async (req, res) => {
   try {
@@ -225,83 +194,5 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-// DELETE /bulk -> delete multiple products with concurrent processing
-router.delete('/bulk/delete', async (req, res) => {
-  try {
-    const { productIds } = req.body;
-
-    if (!Array.isArray(productIds) || productIds.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Product IDs array is required'
-      });
-    }
-
-    // Use p-limit for concurrent deletion
-    const deleteProductFunctions = productIds.map(id => async () => {
-      const product = await Product.findById(id);
-      if (product && product.imagePublicId) {
-        await cloudinaryUtils.deleteImage(product.imagePublicId);
-      }
-      return await Product.findByIdAndDelete(id);
-    });
-
-    const results = await rateLimiter.limitDbOperations(deleteProductFunctions);
-
-    res.json({
-      success: true,
-      deletedCount: results.length,
-      message: `${results.length} products deleted successfully`
-    });
-  } catch (err) {
-    console.error('Error bulk deleting products:', err);
-    res.status(500).json({ success: false, message: 'Server error' });
-  }
-});
-
-// GET /featured -> get all featured products
-router.get('/featured/list', async (req, res) => {
-  try {
-    const featured = await Product.find({ inFeatured: true })
-      .populate('category')
-      .sort({ createdAt: -1 });
-
-    res.json({
-      success: true,
-      data: featured
-    });
-  } catch (err) {
-    console.error('Error fetching featured products:', err);
-    res.status(500).json({ success: false, message: 'Server error' });
-  }
-});
-
-// GET /category/:categoryId -> get products by category
-router.get('/category/:categoryId', async (req, res) => {
-  try {
-    const { page = 1, limit = 10 } = req.query;
-    const skip = (page - 1) * limit;
-
-    const products = await Product.find({ category: req.params.categoryId })
-      .populate('category')
-      .skip(skip)
-      .limit(parseInt(limit));
-
-    const total = await Product.countDocuments({ category: req.params.categoryId });
-
-    res.json({
-      success: true,
-      data: products,
-      pagination: {
-        total,
-        page: parseInt(page),
-        limit: parseInt(limit)
-      }
-    });
-  } catch (err) {
-    console.error('Error fetching products by category:', err);
-    res.status(500).json({ success: false, message: 'Server error' });
-  }
-});
 
 module.exports = router;

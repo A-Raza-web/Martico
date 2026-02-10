@@ -2,14 +2,18 @@ const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const multer = require('multer');
 
-// Configure Cloudinary
+// --------------------
+// Cloudinary Config
+// --------------------
 cloudinary.config({
   cloud_name: process.env.CLOUD_NAME,
-  api_key: process.env.CLOUD_API_KEY || process.env.CLOUD_APL_KEY, // Fallback for backward compatibility
+  api_key: process.env.CLOUD_API_KEY,
   api_secret: process.env.CLOUD_API_SECRET
 });
 
-// Create Cloudinary storage for multer
+// --------------------
+// Multer storage
+// --------------------
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
@@ -19,15 +23,30 @@ const storage = new CloudinaryStorage({
   }
 });
 
-// Multer upload middleware
-const upload = multer({ storage: storage });
+const upload = multer({ storage });
 
-// Utility functions for direct Cloudinary operations
-const cloudinaryUtils = {
-  // Upload a single image
-  async uploadImage(fileBuffer, fileName) {
+// --------------------
+// Class-based Utils
+// --------------------
+class CloudinaryUtils {
+  // Single image upload (Buffer / Base64 / URL)
+  static async uploadImage(fileInput, fileName) {
     try {
-      const result = await cloudinary.uploader.upload(fileBuffer, {
+      let uploadData = fileInput;
+
+      if (Buffer.isBuffer(fileInput)) {
+        // Determine MIME type
+        let mimeType = 'image/jpeg';
+        if (fileInput.slice(0, 4).toString('hex').startsWith('89504e47')) mimeType = 'image/png';
+        else if (fileInput.slice(0, 2).toString('hex') === 'ffd8') mimeType = 'image/jpeg';
+        else if (fileInput.slice(0, 4).toString('hex').startsWith('474946')) mimeType = 'image/gif';
+        else if (fileInput.slice(0, 4).toString('hex').startsWith('52494646')) mimeType = 'image/webp';
+
+        const base64 = fileInput.toString('base64');
+        uploadData = `data:${mimeType};base64,${base64}`;
+      }
+
+      const result = await cloudinary.uploader.upload(uploadData, {
         folder: 'martico_products',
         public_id: fileName,
         transformation: [
@@ -35,6 +54,7 @@ const cloudinaryUtils = {
           { quality: 'auto', fetch_format: 'auto' }
         ]
       });
+
       return {
         url: result.secure_url,
         public_id: result.public_id
@@ -42,10 +62,10 @@ const cloudinaryUtils = {
     } catch (error) {
       throw new Error(`Cloudinary upload failed: ${error.message}`);
     }
-  },
+  }
 
-  // Upload multiple images
-  async uploadMultipleImages(files) {
+  // Multiple images upload
+  static async uploadMultipleImages(files) {
     try {
       const uploadPromises = files.map(async (file, index) => {
         const result = await cloudinary.uploader.upload(file.buffer, {
@@ -66,30 +86,30 @@ const cloudinaryUtils = {
     } catch (error) {
       throw new Error(`Cloudinary multiple upload failed: ${error.message}`);
     }
-  },
+  }
 
-  // Delete image by public_id
-  async deleteImage(publicId) {
+  // Delete single image
+  static async deleteImage(publicId) {
     try {
       const result = await cloudinary.uploader.destroy(publicId);
       return result;
     } catch (error) {
       throw new Error(`Cloudinary delete failed: ${error.message}`);
     }
-  },
+  }
 
   // Delete multiple images
-  async deleteMultipleImages(publicIds) {
+  static async deleteMultipleImages(publicIds) {
     try {
       const result = await cloudinary.api.delete_resources(publicIds);
       return result;
     } catch (error) {
       throw new Error(`Cloudinary multiple delete failed: ${error.message}`);
     }
-  },
+  }
 
   // Get image info
-  async getImageInfo(publicId) {
+  static async getImageInfo(publicId) {
     try {
       const result = await cloudinary.api.resource(publicId);
       return result;
@@ -97,9 +117,7 @@ const cloudinaryUtils = {
       throw new Error(`Cloudinary get info failed: ${error.message}`);
     }
   }
-};
+}
 
-module.exports = {
-  upload,
-  cloudinary: cloudinaryUtils
-};
+// Export
+module.exports = { upload, CloudinaryUtils };
