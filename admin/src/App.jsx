@@ -15,6 +15,7 @@ import Banners from './pages/HomeBanner/Banners'
 import SideBanners from './pages/SideBanner/SideBanners'
 import BottomBanners from './pages/BottomBanner/BottomBanners'
 import Sliders from './pages/Slider/Sliders'
+import CategoryManagement from './pages/Category/CategoryManagement'
 import { ThemeProvider } from './context/ThemeContext'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
@@ -69,6 +70,8 @@ function App() {
       case '/bottom-banners/list': return 'Bottom Banner List'
       case '/sliders/upload': return 'Upload Slider'
       case '/sliders/list': return 'Slider List'
+      case '/categories/upload': return 'Upload Category'
+      case '/categories/list': return 'Category List'
       case '/login': return 'Login'
       case '/signup': return 'Signup'
       case '/profile': return 'User Profile'
@@ -94,6 +97,7 @@ function App() {
             <main className="content">
               <Routes>
                 <Route path="/" element={<Dashboard />} />
+                <Route path="/categories/*" element={<CategoryManagement />} />
                 <Route path="/products" element={<Products />} />
                 <Route path="/products/new" element={<ProductForm />} />
                 <Route path="/products/:id" element={<ProductForm />} />

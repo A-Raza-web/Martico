@@ -15,6 +15,7 @@ import ViewCarouselIcon from '@mui/icons-material/ViewCarouselOutlined'
 import ViewSidebarIcon from '@mui/icons-material/ViewSidebarOutlined'
 import ViewHeadlineIcon from '@mui/icons-material/ViewHeadlineOutlined'
 import SlideshowIcon from '@mui/icons-material/SlideshowOutlined'
+import CategoryIcon from '@mui/icons-material/CategoryOutlined'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import MoreVertIcon from '@mui/icons-material/MoreVert'
 
@@ -64,6 +65,17 @@ const navItems = [
     children: [
       { id: 'upload-slider', label: 'Upload Slider', path: '/sliders/upload' },
       { id: 'sliders-list', label: 'Slider List', path: '/sliders/list' },
+    ]
+  },
+  {
+    id: 'categories',
+    label: 'Category',
+    group: 'General',
+    path: '/categories',
+    icon: <CategoryIcon sx={{ fontSize: 20 }} />,
+    children: [
+      { id: 'upload-category', label: 'Upload Category', path: '/categories/upload' },
+      { id: 'categories-list', label: 'Category List', path: '/categories/list' },
     ]
   },
   { id: 'customers', label: 'Customers', group: 'General', path: '/customers', icon: <PeopleIcon sx={{ fontSize: 20 }} /> },

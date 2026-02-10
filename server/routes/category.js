@@ -54,9 +54,6 @@ router.post('/create', async (req, res) => {
 
           return result.url;
         }
-          console.log('UTILS:', CloudinaryUtils);
-          console.log('TYPE:', typeof CloudinaryUtils.uploadImage);
-
         // External URL
         if (typeof img === 'string' && (img.startsWith('http://') || img.startsWith('https://'))) {
           // Optionally: upload URL to Cloudinary
@@ -83,6 +80,79 @@ router.post('/create', async (req, res) => {
       success: true,
       data: savedCategory,
       message: 'Category created successfully'
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// PUT /api/category/:id
+router.put('/:id', async (req, res) => {
+  try {
+    const limit = pLimit(2);
+    const categoryId = req.params.id;
+
+    const category = await Category.findById(categoryId);
+    if (!category) {
+      return res.status(404).json({ success: false, message: 'Category not found' });
+    }
+
+    // ---------- Update simple fields ----------
+    if (req.body.name) category.name = req.body.name;
+    if (req.body.color) category.color = req.body.color;
+
+    // ---------- Image update ----------
+    if (req.body.image) {
+      const images = Array.isArray(req.body.image)
+        ? req.body.image
+        : [req.body.image];
+
+      // 1️⃣ Delete old images from Cloudinary
+      if (category.image?.length) {
+        const publicIds = category.image.map((url) => {
+          const parts = url.split('/');
+          return parts[parts.length - 1].split('.')[0];
+        });
+
+        for (const id of publicIds) {
+          await CloudinaryUtils.deleteImage(`martico_products/${id}`);
+        }
+      }
+
+      // 2️⃣ Upload new images
+      const uploadPromises = images.map((img, index) => {
+        return limit(async () => {
+          if (typeof img === 'string' && img.startsWith('data:image/')) {
+            const result = await CloudinaryUtils.uploadImage(
+              img,
+              `category_${Date.now()}_${index}`
+            );
+            return result.url;
+          }
+
+          if (typeof img === 'string' && img.startsWith('http')) {
+            const result = await CloudinaryUtils.uploadImage(
+              img,
+              `category_${Date.now()}_${index}`
+            );
+            return result.url;
+          }
+
+          throw new Error('Invalid image format');
+        });
+      });
+
+      category.image = await Promise.all(uploadPromises);
+    }
+
+    const updatedCategory = await category.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Category updated successfully',
+      data: updatedCategory
     });
 
   } catch (error) {
