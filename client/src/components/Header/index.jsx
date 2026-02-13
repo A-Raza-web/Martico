@@ -34,7 +34,7 @@ const Header = ()=>{
                               <div className='ml-auto cardTab d-flex align-items-center'> 
                                  {/* <span className='price'>$3.22</span> */}
                                  <div className=' positon-relative ml-2'>
-                                    <Button className='circle2 '><IoBagOutline/></Button>
+                                    <Button component={Link} to={'/card'} className='circle2 '><IoBagOutline/></Button>
                                     <span className='count d-flex align-items-center justify-content-center'>1</span>
                                  </div>
                               </div>                             

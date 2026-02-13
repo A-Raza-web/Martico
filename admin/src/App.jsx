@@ -3,7 +3,7 @@ import { Routes, Route, useLocation, Link } from 'react-router-dom'
 import Button from '@mui/material/Button'
 import SideNavbar from './component/SideNavbar'
 import Dashboard from './pages/Dashboard'
-import Products from './pages/Products'
+import Products from './pages/ProductsCat'
 import ProductForm from './pages/ProductForm'
 import Orders from './pages/Orders'
 import OrderDetails from './pages/OrderDetails'
@@ -21,6 +21,8 @@ import Login from './pages/Login'
 import Signup from './pages/Signup'
 import Profile from './pages/Profile'
 import UserSettings from './pages/UserSettings'
+import ProductPage from './pages/productListpage'
+import ProductList from './pages/productListpage'
 import './App.css'
 
 function Topbar({ title }) {
@@ -55,7 +57,8 @@ function App() {
   const getPageTitle = (pathname) => {
     switch (pathname) {
       case '/': return 'Dashboard'
-      case '/products': return 'Products'
+      case '/products': return 'Product Cat List'
+      case '/products/list': return 'Product List'
       case '/orders': return 'Orders'
       case '/customers': return 'Customers'
       case '/reports': return 'Reports'
@@ -99,8 +102,12 @@ function App() {
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/categories/*" element={<CategoryManagement />} />
                 <Route path="/products" element={<Products />} />
+                <Route path="/products/list" element={<ProductList />} />
+                <Route path="/product-list/:id" element={<ProductList />} />
+
                 <Route path="/products/new" element={<ProductForm />} />
                 <Route path="/products/:id" element={<ProductForm />} />
+                <Route path="/products/view/:id" element={<ProductPage />} />
                 <Route path="/orders" element={<Orders />} />
                 <Route path="/orders/:id" element={<OrderDetails />} />
                 <Route path="/customers" element={<Customers />} />

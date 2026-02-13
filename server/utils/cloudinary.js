@@ -119,5 +119,6 @@ class CloudinaryUtils {
   }
 }
 
+
 // Export
 module.exports = { upload, CloudinaryUtils };

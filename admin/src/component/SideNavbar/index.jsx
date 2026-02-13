@@ -22,7 +22,18 @@ import MoreVertIcon from '@mui/icons-material/MoreVert'
 const navItems = [
   { id: 'dashboard', label: 'Dashboard', group: 'General', path: '/', icon: <DashboardIcon sx={{ fontSize: 20 }} /> },
   { id: 'orders', label: 'Orders', group: 'General', path: '/orders', icon: <ShoppingCartIcon sx={{ fontSize: 20 }} /> },
-  { id: 'products', label: 'Products', group: 'General', path: '/products', icon: <InventoryIcon sx={{ fontSize: 20 }} /> },
+  {
+    id: 'products',
+    label: 'Products',
+    group: 'General',
+    path: '/products',
+    icon: <InventoryIcon sx={{ fontSize: 20 }} />,
+    children: [
+      { id: 'upload-product', label: 'Upload Product', path: '/products/new' },
+      { id: 'product-cat-list', label: 'Product Cat List', path: '/products' },
+      { id: 'product-list', label: 'Product List', path: '/products/list' },
+    ]
+  },
   {
     id: 'banners',
     label: 'Home Banner',
@@ -47,7 +58,7 @@ const navItems = [
   },
   {
     id: 'bottom-banners',
-    label: 'Home Bottom Banner',
+    label: 'Home Btm Banner',
     group: 'General',
     path: '/bottom-banners',
     icon: <ViewHeadlineIcon sx={{ fontSize: 20 }} />,
@@ -132,6 +143,7 @@ function SideNavbar() {
               <NavLink
                 key={child.id}
                 to={child.path}
+                end
                 className={({ isActive }) =>
                   isActive ? 'nav-item sub-item active' : 'nav-item sub-item'
                 }

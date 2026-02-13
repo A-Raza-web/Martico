@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import { Link } from 'react-router-dom';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import 'swiper/css';
 import 'swiper/css/navigation';
@@ -75,13 +76,15 @@ const HomeCat = () => {
           >
             {images.map((img, index) => (
               <SwiperSlide key={index}>
-                <div
-                  className="items  cursor"
-                  style={{ background: colors[index % colors.length] }}
-                >
-                  <img src={img} alt="cat" />
-                  <h6>Category</h6>
-                </div>
+                <Link to={`/cat/${index + 1}`}>
+                  <div
+                    className="items  cursor"
+                    style={{ background: colors[index % colors.length] }}
+                  >
+                    <img src={img} alt="cat" />
+                    <h6>Category</h6>
+                  </div>
+                </Link>
               </SwiperSlide>
             ))}
           </Swiper>

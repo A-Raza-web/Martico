@@ -3,150 +3,169 @@ import { FaStar } from "react-icons/fa";
 import "./ReviewSection.css";
 
 const ReviewSection = () => {
-  const [reviews, setReviews] = useState([]);
+  const [reviews, setReviews] = useState([
+    {
+      name: "Robert Karmazov",
+      message: "Auctor magnis proin vitae laoreet ultrices ultricies diam. Sed duis mattis cras lacus donec. Aliquam.",
+      rating: 4,
+      avatar: "https://i.pravatar.cc/150?u=robert1"
+    },
+    {
+      name: "Robert Karmazov",
+      message: "Auctor magnis proin vitae laoreet ultrices ultricies diam. Sed duis mattis cras lacus donec. Aliquam.",
+      rating: 4,
+      avatar: "https://i.pravatar.cc/150?u=robert2"
+    },
+    {
+      name: "Robert Karmazov",
+      message: "Auctor magnis proin vitae laoreet ultrices ultricies diam. Sed duis mattis cras lacus donec. Aliquam.",
+      rating: 4,
+      avatar: "https://i.pravatar.cc/150?u=robert3"
+    }
+  ]);
   const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [rating, setRating] = useState(0);
-  const [showReviews, setShowReviews] = useState(false); // 👈 toggle state
-
-  // compute average rating to show in header
-  const averageRating =
-    reviews.length > 0
-      ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1)
-      : null;
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (rating === 0) return alert("Please select a rating!");
 
     const newReview = {
       name,
+      email,
       message,
       rating,
+      avatar: `https://i.pravatar.cc/150?u=${name}`
     };
 
     setReviews([newReview, ...reviews]);
     setName("");
+    setEmail("");
     setMessage("");
     setRating(0);
-    setShowReviews(true); // submit ke baad reviews dikhao
   };
 
+  const ratingDistribution = [
+    { label: "Five", stars: 5, count: 989, percentage: 70 },
+    { label: "Four", stars: 4, count: "4.5K", percentage: 85 },
+    { label: "Three", stars: 3, count: 50, percentage: 30 },
+    { label: "Two", stars: 2, count: 16, percentage: 15 },
+    { label: "One", stars: 1, count: 8, percentage: 5 },
+  ];
+
   return (
-    <section className="review-section" aria-labelledby="reviews-heading">
-      <div className="review-header">
-        <h2 id="reviews-heading">Customer Reviews</h2>
-
-        {reviews.length > 0 ? (
-          <div className="avg-rating" aria-live="polite">
-            <div className="avg-value">{averageRating}</div>
-            <div className="avg-stars" aria-hidden="true">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <FaStar key={i} className={i <= Math.round(averageRating) ? "filled" : ""} />
-              ))}
+    <section className="review-section">
+      {/* 1. Rating Summary (Top) */}
+      <div className="rating-summary">
+        <div className="rating-bars">
+          {ratingDistribution.map((row, index) => (
+            <div key={index} className="bar-row">
+              <span>{row.label}</span>
+              <div className="star-icon"><FaStar /></div>
+              <div className="bar-bg">
+                <div className="bar-fill" style={{ width: `${row.percentage}%` }}></div>
+              </div>
+              <span>{row.count}</span>
             </div>
-            <div className="review-count">{reviews.length} review{reviews.length > 1 ? 's' : ''}</div>
-          </div>
-        ) : (
-          <p className="no-review-intro">Be the first to review this product!</p>
-        )}
-      </div>
+          ))}
+        </div>
 
-      {/* Buttons */}
-      <div className="review-btns">
-        <button
-          type="button"
-          aria-pressed={!showReviews}
-          className={!showReviews ? "active" : ""}
-          onClick={() => setShowReviews(false)}
-        >
-          Submit Review
-        </button>
-
-        <button
-          type="button"
-          aria-pressed={showReviews}
-          className={showReviews ? "active" : ""}
-          onClick={() => setShowReviews(true)}
-        >
-          View Reviews
-        </button>
-      </div>
-
-      {/* ================= FORM ================= */}
-      {!showReviews && (
-        <form onSubmit={handleSubmit} className="review-form">
-          <label htmlFor="review-name" className="sr-only">
-            Your Name
-          </label>
-          <input
-            id="review-name"
-            type="text"
-            placeholder="Your Name"
-            value={name}
-            required
-            onChange={(e) => setName(e.target.value)}
-            aria-label="Your name"
-          />
-
-          <label htmlFor="review-message" className="sr-only">
-            Your Review
-          </label>
-          <textarea
-            id="review-message"
-            placeholder="Write your review..."
-            value={message}
-            required
-            onChange={(e) => setMessage(e.target.value)}
-            aria-label="Your review"
-          ></textarea>
-
-          <div className="stars" role="radiogroup" aria-label="Rating">
-            {[1, 2, 3, 4, 5].map((star) => (
-              <FaStar
-                key={star}
-                className={rating >= star ? "active" : ""}
-                onClick={() => setRating(star)}
-                role="radio"
-                aria-checked={rating === star}
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") setRating(star);
-                }}
-                aria-label={`${star} star`}
-              />
+        <div className="avg-rating-card">
+          <div className="avg-value-big">4.3</div>
+          <div className="avg-stars-big">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <FaStar key={i} className={i <= 4 ? "filled" : "empty"} />
             ))}
           </div>
+          <div className="avg-count-label">50 Ratings</div>
+        </div>
+      </div>
 
-          <button type="submit">Submit Review</button>
-        </form>
-      )}
+      {/* 2. Bottom Split Section */}
+      <div className="reviews-split-layout">
 
-      {/* ================= REVIEWS LIST ================= */}
-      {showReviews && (
-        <div className="review-list">
-          {reviews.length === 0 ? (
-            <p className="no-review">No reviews yet 😕</p>
-          ) : (
-            reviews.map((review, index) => (
-              <div className="review-card" key={index}>
-                <div className="card-head">
-                  <div className="avatar" aria-hidden="true">{review.name ? review.name.charAt(0).toUpperCase() : "U"}</div>
-                  <div className="meta">
+        {/* Left: Recent Feedbacks */}
+        <div className="feedbacks-part">
+          <h3 className="section-title">Recent Feedbacks</h3>
+          <div className="feedback-list">
+            {reviews.map((review, index) => (
+              <div key={index} className="feedback-card">
+                <div className="user-avatar">
+                  <img src={review.avatar} alt={review.name} />
+                </div>
+                <div className="feedback-content">
+                  <div className="feedback-header">
                     <h4>{review.name}</h4>
-                    <div className="rating" aria-label={`Rating: ${review.rating} out of 5`}>
-                      {[...Array(review.rating)].map((_, i) => (
-                        <FaStar key={i} />
+                    <div className="feedback-stars">
+                      {[1, 2, 3, 4, 5].map((i) => (
+                        <FaStar key={i} className={i <= review.rating ? "active" : "empty"} />
                       ))}
                     </div>
                   </div>
+                  <p className="feedback-text">{review.message}</p>
                 </div>
-
-                <p>{review.message}</p>
               </div>
-            ))
-          )}
+            ))}
+          </div>
         </div>
-      )}
+
+        {/* Right: Add a Review */}
+        <div className="add-review-part">
+          <h3 className="section-title">Add a Review</h3>
+          <form onSubmit={handleSubmit} className="add-review-form">
+
+            <div className="form-group">
+              <label>Add Your Rating *</label>
+              <div className="star-rating-selector">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <FaStar
+                    key={star}
+                    className={rating >= star ? "active" : ""}
+                    onClick={() => setRating(star)}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label>Name *</label>
+              <input
+                type="text"
+                placeholder="John Doe"
+                value={name}
+                required
+                onChange={(e) => setName(e.target.value)}
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Email *</label>
+              <input
+                type="email"
+                placeholder="JohnDoe@gmail.com"
+                value={email}
+                required
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Write Your Review *</label>
+              <textarea
+                placeholder="Write here..."
+                value={message}
+                required
+                onChange={(e) => setMessage(e.target.value)}
+              ></textarea>
+            </div>
+
+            <button type="submit" className="submit-review-btn">Submit</button>
+          </form>
+        </div>
+
+      </div>
     </section>
   );
 };

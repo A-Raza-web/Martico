@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const Category = require('../models/category');
 const { CloudinaryUtils }  = require('../utils/cloudinary');
-const { rateLimiter } = require('../utils/rateLimiter');
 const pLimit = require('p-limit').default;
 
 
@@ -30,119 +29,132 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST /api/category/create
+
+// POST /api/categories/create
 router.post('/create', async (req, res) => {
   try {
-    const limit = pLimit(2);
-
-    // Ensure req.body.image is an array
-    const images = Array.isArray(req.body.image) ? req.body.image : [req.body.image];
-
-    // Validate images
-    if (!images || images.length === 0) {
-      return res.status(400).json({ success: false, message: 'No images provided' });
+    // ===============================
+    // 1️⃣ Check if req.body exists
+    // ===============================
+    if (!req.body || Object.keys(req.body).length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Request body empty. JSON req !"
+      });
     }
 
-    // Upload each image
-    const uploadPromises = images.map((img, index) => {
-      return limit(async () => {
-        // Base64
-        if (typeof img === 'string' && img.startsWith('data:image/')) {
-        
-          const result = await CloudinaryUtils.uploadImage(img, `category_${Date.now()}_${index}`);
-         
+    // ===============================
+    // 2️⃣ Extract fields from body
+    // ===============================
+    const { name, color, image } = req.body;
 
+    if (!name) {
+      return res.status(400).json({ success: false, message: "Name missing hai" });
+    }
+
+    if (!image) {
+      return res.status(400).json({ success: false, message: "Image field missing hai" });
+    }
+
+    // ===============================
+    // 3️⃣ Make sure image is array
+    // ===============================
+    const images = Array.isArray(image) ? image : [image];
+
+    // ===============================
+    // 4️⃣ Upload images to Cloudinary with concurrency control
+    // ===============================
+    const limit = pLimit(2); // 2 uploads at a time
+
+    const uploadPromises = images.map((img, index) =>
+      limit(async () => {
+        if (!img || typeof img !== 'string') {
+          throw new Error("Invalid image format");
+        }
+
+        // Base64
+        if (img.startsWith('data:image/')) {
+          const result = await CloudinaryUtils.uploadImage(img, `category_${Date.now()}_${index}`);
           return result.url;
         }
+
         // External URL
-        if (typeof img === 'string' && (img.startsWith('http://') || img.startsWith('https://'))) {
-          // Optionally: upload URL to Cloudinary
+        if (img.startsWith('http://') || img.startsWith('https://')) {
           const result = await CloudinaryUtils.uploadImage(img, `category_${Date.now()}_${index}`);
           return result.url;
         }
 
         throw new Error('Invalid image format. Use base64 string or valid URL.');
-      });
-    });
+      })
+    );
 
     const imgUrls = await Promise.all(uploadPromises);
 
-    // Save category in MongoDB
+    // ===============================
+    // 5️⃣ Save category in MongoDB
+    // ===============================
     const newCategory = new Category({
-      name: req.body.name,
-      color: req.body.color || '#ffffff',
+      name,
+      color: color || '#ffffff',
       image: imgUrls
     });
 
     const savedCategory = await newCategory.save();
 
+    // ===============================
+    // 6️⃣ Success response
+    // ===============================
     res.status(201).json({
       success: true,
       data: savedCategory,
-      message: 'Category created successfully'
+      message: "Category created successfully"
     });
 
   } catch (error) {
-    console.error(error);
+    console.error("ERROR:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
 
-// PUT /api/category/:id
+
 router.put('/:id', async (req, res) => {
   try {
     const limit = pLimit(2);
     const categoryId = req.params.id;
 
     const category = await Category.findById(categoryId);
-    if (!category) {
-      return res.status(404).json({ success: false, message: 'Category not found' });
-    }
+    if (!category) return res.status(404).json({ success: false, message: 'Category not found' });
 
-    // ---------- Update simple fields ----------
+    // Update simple fields
     if (req.body.name) category.name = req.body.name;
     if (req.body.color) category.color = req.body.color;
 
-    // ---------- Image update ----------
-    if (req.body.image) {
-      const images = Array.isArray(req.body.image)
-        ? req.body.image
-        : [req.body.image];
+    // Update images
+    if (req.body.image && Array.isArray(req.body.image)) {
+      const images = req.body.image;
 
-      // 1️⃣ Delete old images from Cloudinary
+      // Delete old images from Cloudinary if they exist
       if (category.image?.length) {
-        const publicIds = category.image.map((url) => {
+        const publicIds = category.image.map(url => {
           const parts = url.split('/');
-          return parts[parts.length - 1].split('.')[0];
+          return parts[parts.length - 1].split('.')[0]; // get filename without extension
         });
-
         for (const id of publicIds) {
           await CloudinaryUtils.deleteImage(`martico_products/${id}`);
         }
       }
 
-      // 2️⃣ Upload new images
-      const uploadPromises = images.map((img, index) => {
-        return limit(async () => {
-          if (typeof img === 'string' && img.startsWith('data:image/')) {
-            const result = await CloudinaryUtils.uploadImage(
-              img,
-              `category_${Date.now()}_${index}`
-            );
+      // Upload new images to Cloudinary
+      const uploadPromises = images.map((img, index) =>
+        limit(async () => {
+          if (img.startsWith('data:image/')) {
+            const result = await CloudinaryUtils.uploadImage(img, `category_${Date.now()}_${index}`);
             return result.url;
           }
-
-          if (typeof img === 'string' && img.startsWith('http')) {
-            const result = await CloudinaryUtils.uploadImage(
-              img,
-              `category_${Date.now()}_${index}`
-            );
-            return result.url;
-          }
-
-          throw new Error('Invalid image format');
-        });
-      });
+          // Already URL → keep as is
+          return img;
+        })
+      );
 
       category.image = await Promise.all(uploadPromises);
     }
@@ -154,51 +166,45 @@ router.put('/:id', async (req, res) => {
       message: 'Category updated successfully',
       data: updatedCategory
     });
-
   } catch (error) {
-    console.error(error);
+    console.error("PUT /categories/:id error:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
+
 
 router.delete('/:id', async (req, res) => {
   try {
     const categoryId = req.params.id;
 
-    // First get the category to access image data
+    // Get the category
     const categoryToDelete = await Category.findById(categoryId);
     if (!categoryToDelete) {
       return res.status(404).json({ success: false, message: 'Category not found' });
     }
 
-    // Delete associated images from Cloudinary if they exist
+    // Delete images from Cloudinary
     if (categoryToDelete.image && categoryToDelete.image.length > 0) {
-      try {
-        // Extract public_ids from Cloudinary URLs
-        const publicIds = categoryToDelete.image.map(imgUrl => {
-          // Extract public_id from Cloudinary URL
-          const parts = imgUrl.split('/');
-          const filename = parts[parts.length - 1];
-          const publicId = filename.split('.')[0];
-          return publicId;
-        }).filter(id => id); // Filter out any falsy values
+      const publicIds = categoryToDelete.image.map(imgUrl => {
+        const parts = imgUrl.split('/');
+        const filename = parts[parts.length - 1]; // example: category_1770877620083_1.png
+        return `martico_products/${filename.split('.')[0]}`; // include folder
+      });
 
-        // Delete all images
-        if (publicIds.length > 0) {
-          await Promise.all(publicIds.map(publicId =>
-            cloudinaryUtils.deleteImage(publicId).catch(err => {
-              console.warn('Failed to delete image:', publicId, err.message);
-            })
-          ));
-          console.log(`Deleted images: ${publicIds.join(', ')}`);
-        }
-      } catch (deleteErr) {
-        console.warn('Failed to delete associated images:', deleteErr.message);
-        // Continue with category deletion even if image deletion fails
-      }
+      // Delete all images
+      await Promise.all(
+        publicIds.map(async (publicId) => {
+          try {
+            await CloudinaryUtils.deleteImage(publicId);
+            console.log('Deleted image:', publicId);
+          } catch (err) {
+            console.warn('Failed to delete image:', publicId, err.message);
+          }
+        })
+      );
     }
 
-    // Delete the category
+    // Delete category from MongoDB
     const removed = await Category.findByIdAndDelete(categoryId);
 
     res.json({
@@ -206,11 +212,13 @@ router.delete('/:id', async (req, res) => {
       message: 'Category and associated images deleted successfully',
       data: removed
     });
+
   } catch (err) {
     console.error('Error deleting category:', err);
     res.status(500).json({ success: false, message: 'Server error' });
   }
 });
+
 
 
 module.exports = router;

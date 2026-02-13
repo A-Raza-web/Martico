@@ -80,6 +80,27 @@
 
 .banners-list {
   padding: 16px;
+  max-height: 600px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) transparent;
+}
+
+.banners-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.banners-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.banners-list::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 10px;
+}
+
+.banners-list::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
 }
 
 .banner-item-row {
@@ -91,16 +112,28 @@
   margin-bottom: 12px;
   gap: 16px;
   background: var(--bg-card);
+  transition: all 0.2s ease;
+}
+
+.banner-item-row:hover {
+  border-color: var(--primary-color);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  background: var(--bg-input);
 }
 
 .banner-row-image {
   flex-shrink: 0;
 }
 
+.banner-row-image {
+  width: auto !important;
+  padding: 0px 16px !important;
+}
+
 .banner-row-image img {
-  width: 100px;
+  width: auto;
   height: 100px;
-  object-fit: cover;
+  object-fit: contain;
   border-radius: 4px;
 }
 
@@ -180,9 +213,76 @@
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .banner-row-actions {
     margin-top: 12px;
     justify-content: flex-end;
   }
+}
+
+/* Empty State Styles */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+  background: var(--bg-card);
+  border-radius: 8px;
+  border: 1px dashed var(--border-color);
+  margin-top: 16px;
+}
+
+.empty-icon-wrapper {
+  width: 64px;
+  height: 64px;
+  background: var(--bg-input);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.empty-icon {
+  font-size: 32px !important;
+  color: var(--text-muted);
+}
+
+.empty-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.empty-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  max-width: 300px;
+  line-height: 1.5;
+}
+
+/* Validation Styles */
+.file-upload-area.error {
+  border-color: #d32f2f !important;
+  background-color: rgba(211, 47, 47, 0.04) !important;
+}
+
+.error-text {
+  color: #d32f2f;
+  font-size: 0.75rem;
+  margin-top: 4px;
+  margin-left: 14px;
+  font-weight: 400;
+}
+
+/* Ensure MUI labels don't turn red on error to match custom fields */
+.form-select-mui .MuiInputLabel-root.Mui-error {
+  color: var(--text-secondary) !important;
+}
+
+.form-select-mui .MuiOutlinedInput-root.Mui-error .MuiOutlinedInput-notchedOutline {
+  border-color: #d32f2f !important;
 }

@@ -4,6 +4,10 @@
   padding: 24px 20px;
   background: var(--bg-sidebar);
   border-right: 1px solid var(--border-color);
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  overflow: hidden;
 }
 
 .sidebar-header {
@@ -11,6 +15,7 @@
   align-items: center;
   gap: 10px;
   margin-bottom: 32px;
+  flex-shrink: 0;
 }
 
 .logo-full {
@@ -36,6 +41,29 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
+  overflow-y: auto;
+  min-height: 0;
+  /* Crucial for nested flex scrolling */
+  padding-right: 4px;
+  /* Avoid scrollbar overlapping content */
+}
+
+/* Custom Scrollbar for Sidebar Nav */
+.sidebar-nav::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb {
+  background-color: var(--border-color);
+  border-radius: 4px;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb:hover {
+  background-color: var(--text-muted);
 }
 
 .sidebar-group-label {
@@ -136,6 +164,33 @@
   color: var(--primary-color);
 }
 
+/* Sub-item Hover & Active States */
+.nav-item.sub-item:hover {
+  background: rgba(15, 118, 110, 0.05);
+}
+
+.nav-item.sub-item:hover .nav-line {
+  background: var(--text-muted);
+  transform: scale(1.5);
+}
+
+.nav-item.sub-item.active {
+  background: rgba(15, 118, 110, 0.08);
+  color: var(--primary-color);
+}
+
+.nav-item.sub-item.active .nav-line {
+  background: var(--primary-color);
+  width: 6px;
+  height: 6px;
+  transform: scale(1.2);
+}
+
+/* Ensure sub-items don't get the same side-bar indicator as parent items */
+.nav-item.sub-item.active::before {
+  display: none;
+}
+
 .nav-item.active {
   background: rgba(15, 118, 110, 0.1);
   color: var(--primary-color);
@@ -174,6 +229,7 @@
   flex-direction: column;
   gap: 16px;
   border-top: 1px solid var(--border-color);
+  flex-shrink: 0;
 }
 
 .preference-section {

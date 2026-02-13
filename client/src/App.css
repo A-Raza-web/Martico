@@ -194,6 +194,7 @@ body {
 }
 
 .header .part3 .circle2 {
+  margin-left: 8px !important;
   align-items: center;
   justify-content: center;
   min-width: 40px;

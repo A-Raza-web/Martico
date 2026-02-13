@@ -1,16 +1,22 @@
 import { useState } from 'react';
-import MenuItem from '@mui/material/MenuItem';
+import { useNavigate } from 'react-router-dom';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button'
+import axios from "axios";
+import Backdrop from '@mui/material/Backdrop';
+import CircularProgress from '@mui/material/CircularProgress';
 import './CategoryManagement.css';
 
-function UploadCategory() {
+function UploadCategory({ refreshCategories, showNotification, setProgress }) {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
-    color: '#000000',
+    color: '',
     image: null,
     imageName: ''
   });
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -18,6 +24,14 @@ function UploadCategory() {
       ...prev,
       [name]: value
     }));
+    // Clear error for this field
+    if (errors[name]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
   };
 
   const handleImageChange = (e) => {
@@ -28,6 +42,14 @@ function UploadCategory() {
         image: file,
         imageName: file.name
       }));
+      // Clear error for image
+      if (errors.image) {
+        setErrors(prev => {
+          const newErrors = { ...prev };
+          delete newErrors.image;
+          return newErrors;
+        });
+      }
     }
   };
 
@@ -38,14 +60,78 @@ function UploadCategory() {
     }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // Handle form submission here
-    console.log('Category form submitted:', formData);
+  const handleCancel = () => {
+    setFormData({
+      name: '',
+      color: '',
+      image: null,
+      imageName: ''
+    });
+    setErrors({});
   };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    // Validation
+    const newErrors = {};
+    if (!formData.name.trim()) newErrors.name = "Category name is required";
+    if (!formData.color.trim()) newErrors.color = "Color is required";
+    if (!formData.image) newErrors.image = "Category image is required";
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    setLoading(true);
+    if (setProgress) setProgress(30);
+
+    try {
+      const base64Image = await convertToBase64(formData.image);
+
+      const payload = {
+        name: formData.name,
+        color: formData.color,
+        image: [base64Image], // array bana do
+      };
+
+      console.log("Sending Data:", payload);
+
+      await axios.post("http://localhost:4000/api/categories/create", payload);
+
+      // Refresh the list and redirect
+      if (showNotification) showNotification("Category uploaded successfully!", "success");
+      if (refreshCategories) refreshCategories();
+      navigate('/categories/list');
+    } catch (error) {
+      console.error("Upload error:", error);
+      if (showNotification) showNotification("Error uploading category", "error");
+    } finally {
+      setLoading(false);
+      if (setProgress) setProgress(100);
+    }
+  };
+
+
+  const convertToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
 
   return (
     <div className="card upload-banner-card">
+      <Backdrop
+        sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
+        open={loading}
+      >
+        <CircularProgress color="inherit" />
+      </Backdrop>
       <div className="card-header">
         <div>
           <div className="card-title">Upload Category</div>
@@ -65,7 +151,8 @@ function UploadCategory() {
               variant="outlined"
               size="small"
               className="form-select-mui"
-              required
+              error={!!errors.name}
+              helperText={errors.name}
             />
           </div>
 
@@ -79,6 +166,8 @@ function UploadCategory() {
               variant="outlined"
               size="small"
               className="form-select-mui"
+              error={!!errors.color}
+              helperText={errors.color}
             />
           </div>
         </div>
@@ -87,7 +176,7 @@ function UploadCategory() {
           <label className="form-label" htmlFor="category-image">
             Category Image
           </label>
-          <div className="file-upload-area">
+          <div className={`file-upload-area ${errors.image ? 'error' : ''}`}>
             <input
               type="file"
               id="category-image"
@@ -98,9 +187,9 @@ function UploadCategory() {
             />
             {formData.image && (
               <div className="image-preview-box">
-                <img 
-                  src={URL.createObjectURL(formData.image)} 
-                  alt="Preview" 
+                <img
+                  src={URL.createObjectURL(formData.image)}
+                  alt="Preview"
                   className="image-preview"
                 />
               </div>
@@ -109,10 +198,11 @@ function UploadCategory() {
               {formData.imageName ? formData.imageName : 'Choose a category image...'}
             </label>
           </div>
+          {errors.image && <div className="error-text">{errors.image}</div>}
         </div>
 
         <div className="form-actions">
-          <Button type="button" className="btn ghost">
+          <Button type="button" className="btn ghost" onClick={handleCancel}>
             Cancel
           </Button>
           <Button type="submit" className="btn primary">
