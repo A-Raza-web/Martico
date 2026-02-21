@@ -157,7 +157,7 @@ function CategoryManagement() {
         onLoaderFinished={() => setProgress(0)}
       />
       <Backdrop
-        sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
+        sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.modal + 1 }}
         open={loading}
       >
         <CircularProgress color="inherit" />
@@ -187,6 +187,7 @@ function CategoryManagement() {
             refreshCategories={fetchCategories}
             showNotification={showSnackbar}
             setProgress={setProgress}
+            setParentLoading={setLoading}
           />
         )}
 

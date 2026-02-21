@@ -3,7 +3,6 @@ import { Routes, Route, useLocation, Link } from 'react-router-dom'
 import Button from '@mui/material/Button'
 import SideNavbar from './component/SideNavbar'
 import Dashboard from './pages/Dashboard'
-import Products from './pages/ProductsCat'
 import ProductForm from './pages/ProductForm'
 import Orders from './pages/Orders'
 import OrderDetails from './pages/OrderDetails'
@@ -16,6 +15,7 @@ import SideBanners from './pages/SideBanner/SideBanners'
 import BottomBanners from './pages/BottomBanner/BottomBanners'
 import Sliders from './pages/Slider/Sliders'
 import CategoryManagement from './pages/Category/CategoryManagement'
+import SubCategoryManagement from './pages/Category/SubCategoryManagement'
 import { ThemeProvider } from './context/ThemeContext'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
@@ -57,7 +57,6 @@ function App() {
   const getPageTitle = (pathname) => {
     switch (pathname) {
       case '/': return 'Dashboard'
-      case '/products': return 'Product Cat List'
       case '/products/list': return 'Product List'
       case '/orders': return 'Orders'
       case '/customers': return 'Customers'
@@ -75,6 +74,8 @@ function App() {
       case '/sliders/list': return 'Slider List'
       case '/categories/upload': return 'Upload Category'
       case '/categories/list': return 'Category List'
+      case '/sub-categories/upload': return 'Upload Sub Category'
+      case '/sub-categories/list': return 'Sub Category List'
       case '/login': return 'Login'
       case '/signup': return 'Signup'
       case '/profile': return 'User Profile'
@@ -101,9 +102,8 @@ function App() {
               <Routes>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/categories/*" element={<CategoryManagement />} />
-                <Route path="/products" element={<Products />} />
+                <Route path="/sub-categories/*" element={<SubCategoryManagement />} />
                 <Route path="/products/list" element={<ProductList />} />
-                <Route path="/product-list/:id" element={<ProductList />} />
 
                 <Route path="/products/new" element={<ProductForm />} />
                 <Route path="/products/:id" element={<ProductForm />} />

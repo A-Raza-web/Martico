@@ -12,11 +12,12 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // Import routes
 const categoryRoutes = require('./routes/category');
 const productRoutes = require('./routes/product');
+const subCategoryRoutes = require('./routes/subCat');
 
 // Use routes
 app.use('/api/categories', categoryRoutes);
 app.use('/api/products', productRoutes);
-
+app.use('/api/subcategories', subCategoryRoutes);
 
 const PORT = process.env.PORT ;
 

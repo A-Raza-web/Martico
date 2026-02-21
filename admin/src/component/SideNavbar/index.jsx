@@ -30,7 +30,6 @@ const navItems = [
     icon: <InventoryIcon sx={{ fontSize: 20 }} />,
     children: [
       { id: 'upload-product', label: 'Upload Product', path: '/products/new' },
-      { id: 'product-cat-list', label: 'Product Cat List', path: '/products' },
       { id: 'product-list', label: 'Product List', path: '/products/list' },
     ]
   },
@@ -87,6 +86,8 @@ const navItems = [
     children: [
       { id: 'upload-category', label: 'Upload Category', path: '/categories/upload' },
       { id: 'categories-list', label: 'Category List', path: '/categories/list' },
+      { id: 'upload-sub-category', label: 'Upload Sub Category', path: '/sub-categories/upload' },
+      { id: 'sub-categories-list', label: 'Sub Category List', path: '/sub-categories/list' },
     ]
   },
   { id: 'customers', label: 'Customers', group: 'General', path: '/customers', icon: <PeopleIcon sx={{ fontSize: 20 }} /> },

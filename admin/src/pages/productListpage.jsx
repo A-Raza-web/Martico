@@ -1,150 +1,462 @@
-import { useParams, useNavigate } from "react-router-dom";
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import { useState, useEffect } from "react";
 import SearchIcon from '@mui/icons-material/Search';
-import StarIcon from '@mui/icons-material/Star';
-import Button from '@mui/material/Button';
-import './ProductList.css'; // I will create this file for specific styles
+import { AiFillStar } from 'react-icons/ai';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
+import ProductEditDialog from '../component/productCard/ProductEditDialog';
+import ProductDeleteDialog from '../component/productCard/ProductDeleteDialog';
+import LoadingBar from 'react-top-loading-bar';
+import axios from 'axios';
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/material/Alert';
+import './ProductList.css';
 
 const ProductList = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hoveredRowId, setHoveredRowId] = useState(null);
+  const [openMenuId, setOpenMenuId] = useState(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [filters, setFilters] = useState({
+    category: '',
+    priceRange: ''
+  });
+  const [searchTerm, setSearchTerm] = useState('');
+  const [progress, setProgress] = useState(0);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [categories, setCategories] = useState([]); // Add categories state
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success'
+  });
+  const itemsPerPage = 8;
 
-  const handleMouseMove = (e) => {
-    const card = e.currentTarget;
-    const rect = card.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    card.style.setProperty("--mouse-x", `${x}px`);
-    card.style.setProperty("--mouse-y", `${y}px`);
+  // Fetch categories on mount
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await axios.get("http://localhost:4000/api/categories");
+        if (res.data.success) {
+          setCategories(res.data.data);
+        }
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  // Page load - fetch products
+  useEffect(() => {
+    fetchProducts(currentPage, searchTerm, filters.category);
+    
+    // Check for success message from product creation/edit
+    const successMessage = searchParams.get('success');
+    if (successMessage) {
+      showSnackbar(decodeURIComponent(successMessage), 'success');
+      // Remove the success parameter from URL
+      setSearchParams({});
+    }
+  }, [currentPage, searchParams]);
+
+  // Fetch products from database
+  const fetchProducts = async (page = 1, search = '', category = '') => {
+    setLoading(true);
+    setProgress(30);
+    
+    try {
+      setProgress(60);
+      const response = await axios.get(`http://localhost:4000/api/products`, {
+        params: {
+          page: page,
+          limit: itemsPerPage,
+          search: search || undefined,
+          category: category || undefined
+        }
+      });
+      
+      if (response.data.success) {
+        // Transform the data to match the existing structure
+        const transformedProducts = response.data.data.map(product => ({
+          id: product._id,
+          name: product.name,
+          description: product.description || '',
+          brand: product.brand || 'Unknown',
+          category: product.category || null, // This will now be the full category object or null
+          subCategory: product.subCategory || 'N/A',
+          price: product.price,
+          countInStock: product.countInStock || 0,
+          revenue: product.price * (product.countInStock || 0), // Calculate revenue
+          sales: product.countInStock || 0,
+          stock: product.countInStock || 0,
+          rating: product.rating || 0,
+          inFeatured: product.inFeatured || false,
+          status: product.countInStock > 0 ? 'In Stock' : 'Out Stock',
+          image: product.images && product.images.length > 0 ? product.images[0].url : 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&q=80'
+        }));
+        
+        setProducts(transformedProducts);
+        setTotalProducts(response.data.pagination.total);
+        setTotalPages(response.data.pagination.pages);
+        setProgress(100);
+      }
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      setProgress(100);
+    } finally {
+      setLoading(false);
+      setTimeout(() => setProgress(0), 300);
+    }
   };
 
-  // Enriched Dummy Products Data with Multiple Images Support
-  const allProducts = {
-    1: [
-      {
-        id: 101, name: "Premium Red T-Shirt", brand: "Martico", price: "20.00", stock: 12, rating: 4.5, number: "TS-001", description: "High-quality cotton t-shirt with a premium feel.", inFeatured: true, image: [
-          "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&q=80",
-          "https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=400&q=80",
-          "https://images.unsplash.com/photo-1562157873-818bc0726f68?w=400&q=80"
-        ]
-      },
-      { id: 102, name: "Casual Black T-Shirt", brand: "Classic", price: "30.00", stock: 45, rating: 4.0, number: "TS-002", description: "Comfortable black t-shirt for daily wear.", inFeatured: false, image: "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=400&q=80" },
-      { id: 103, name: "White Polo Shirt", brand: "Polo", price: "25.00", stock: 0, rating: 3.8, number: "TS-003", description: "Classic white polo shirt with breathable fabric.", inFeatured: true, image: "https://images.unsplash.com/photo-1581655353564-df123a1eb820?w=400&q=80" },
-    ],
-    2: [
-      {
-        id: 201, name: "Classic Blue Jeans", brand: "Denim Co", price: "60.00", stock: 24, rating: 4.7, number: "JN-001", description: "Durable blue jeans with a classic fit.", inFeatured: true, image: [
-          "https://images.unsplash.com/photo-1542272604-787c3835535d?w=400&q=80",
-          "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=400&q=80"
-        ]
-      },
-      { id: 202, name: "Slim Fit Dark Jeans", brand: "Urban", price: "75.00", stock: 15, rating: 4.2, number: "JN-002", description: "Stylish dark jeans with a modern slim fit.", inFeatured: false, image: "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=400&q=80" },
-    ],
-    3: [
-      { id: 301, name: "Winter Arctic Jacket", brand: "NorthFace", price: "150.00", stock: 8, rating: 4.9, number: "JK-101", description: "Heavy-duty winter jacket for extreme cold.", inFeatured: true, image: "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=400&q=80" },
-    ],
-    4: [
-      {
-        id: 401, name: "Ultra Sports Shoes", brand: "Nike", price: "90.00", stock: 20, rating: 4.6, number: "SH-501", description: "Performance sports shoes with advanced cushioning.", inFeatured: true, image: [
-          "https://images.unsplash.com/photo-1542291026-7eec264c2744?w=400&q=80",
-          "https://images.unsplash.com/photo-1460353581641-37baddab0fa2?w=400&q=80"
-        ]
-      },
-    ],
+  // Handle search
+  const handleSearch = () => {
+    setCurrentPage(1); // Reset to first page
+    fetchProducts(1, searchTerm, filters.category);
   };
 
-  const products = id
-    ? (allProducts[id] || [])
-    : Object.values(allProducts).flat();
+  // Handle filter change
+  const handleFilterChange = (filterType, value) => {
+    setFilters(prev => ({
+      ...prev,
+      [filterType]: value
+    }));
+    setCurrentPage(1); // Reset to first page
+    fetchProducts(1, searchTerm, value);
+  };
 
-  const categoryName = id
-    ? (["", "T-Shirts", "Jeans", "Jackets", "Shoes"][id] || "Category")
-    : "All Products";
+  const showSnackbar = (message, severity = 'success') => {
+    setSnackbar({ open: true, message, severity });
+  };
+
+  const handleCloseSnackbar = (event, reason) => {
+    if (reason === 'clickaway') return;
+    setSnackbar(prev => ({ ...prev, open: false }));
+  };
+
+  const handleEdit = (product) => {
+    setSelectedProduct(product);
+    setEditDialogOpen(true);
+    setOpenMenuId(null);
+  };
+
+  const handleDelete = (product) => {
+    setSelectedProduct(product);
+    setDeleteDialogOpen(true);
+    setOpenMenuId(null);
+  };
+
+  const handleMenuClick = (productId, e) => {
+    e.stopPropagation();
+    setOpenMenuId(openMenuId === productId ? null : productId);
+  };
+
+  const handleEditUpdate = (updatedProduct) => {
+    setProgress(30);
+    console.log('Product updated:', updatedProduct);
+    // Refresh the product list to show updated data
+    fetchProducts(currentPage, searchTerm, filters.category);
+    showSnackbar('Product updated successfully!', 'success');
+    setEditDialogOpen(false);
+    setProgress(100);
+    setTimeout(() => setProgress(0), 300);
+  };
+
+  const handleDeleteConfirm = () => {
+    setProgress(30);
+    console.log('Product deleted:', selectedProduct);
+    // Refresh the product list to show updated data
+    fetchProducts(currentPage, searchTerm, filters.category);
+    showSnackbar('Product deleted successfully!', 'error');
+    setDeleteDialogOpen(false);
+    setProgress(100);
+    setTimeout(() => setProgress(0), 300);
+  };
+
+  // Truncate description to 4 words and add dots if longer
+  const truncateToFourWords = (text) => {
+    if (!text) return '';
+    const words = text.split(' ').filter(word => word.trim().length > 0);
+    if (words.length > 3) {
+      return words.slice(0, 3).join(' ') + '…';
+    }
+    return text;
+  };
+
+  // Current products for display
+  const currentProducts = products;
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + products.length;
 
   return (
-    <div className="product-list-container">
-      <header className="page-header">
-        <div className="header-top">
-          <div className="header-left">
-            <Button onClick={() => navigate('/products')} className="back-btn">
-              <ArrowBackIcon sx={{ fontSize: 24 }} />
-            </Button>
-            <div className="title-group">
-              <span className="product-count">{products.length} Products Available</span>
-              <h2>{categoryName}</h2>
+    <div className="banners-page">
+      <LoadingBar
+        color='var(--primary-color)'
+        progress={progress}
+        onLoaderFinished={() => setProgress(0)}
+        height={4}
+      />
+      {/* Header Section */}
+      <div className="page-header">
+        <h2>Product Management</h2>
+        <div className="tabs">
+          <button
+            className="tab"
+            onClick={() => navigate('/products/new')}
+          >
+            Upload Product
+          </button>
+          <button
+            className="tab active"
+            onClick={() => navigate('/products/list')}
+          >
+            Product List
+          </button>
+        </div>
+      </div>
+
+      <div className="page-content">
+        <div className="card">
+          <div className="card-header">
+            <div>
+              <div className="card-title">Product List</div>
+              <div className="card-subtitle">
+                Manage your products and view their status.
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="search-filter-row">
-          <div className="modern-search-wrapper">
+          {/* Product Table Section */}
+          <div className="product-table-card">
+        {/* Table Controls */}
+        <div className="table-controls">
+          {/* Left side: Filter Options */}
+          <div className="filter-options">
+            <Select
+              value={filters.category}
+              onChange={(e) => handleFilterChange('category', e.target.value)}
+              displayEmpty
+              className="filter-select form-select-mui"
+              inputProps={{ 'aria-label': 'Without label' }}
+            >
+              <MenuItem value="">
+                <em>All Categories</em>
+              </MenuItem>
+              {categories.map((cat) => (
+                <MenuItem key={cat._id} value={cat._id}>
+                  {cat.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </div>
+          
+          {/* Right side: Search */}
+          <div className="search-wrapper">
+            <SearchIcon className="search-icon" />
             <input
               type="text"
-              className="modern-search-input"
-              placeholder={`Search in ${categoryName}...`}
+              placeholder="Search products..."
+              className="search-input"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
             />
-            <SearchIcon className="search-icon-btn" />
+            <button 
+              className="search-button" 
+              onClick={handleSearch}
+              disabled={loading}
+            >
+              Search
+            </button>
           </div>
         </div>
-      </header>
 
-      <div className="product-grid">
-        {products.length === 0 ? (
-          <div className="card no-products-aura">
-            <p>No products reflect your selection yet.</p>
+        {/* Data Table */}
+        <div className="table-wrapper">
+          <table className="product-table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Brand</th>
+                <th>Category</th>
+                <th>Sub Category</th>
+                <th>Price</th>
+                <th>Stock</th>
+                <th>Rating</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {currentProducts.map((product) => (
+                <tr 
+                  key={product.id}
+                  className="product-row"
+                  onMouseEnter={() => setHoveredRowId(product.id)}
+                  onMouseLeave={() => setHoveredRowId(null)}
+                >
+                  <td>
+                    <div className="product-cell">
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        className="product-image"
+                      />
+                      <div className="product-info">
+                        <div className="product-name">{product.name}</div>
+                        {product.description && (
+                          <div className="product-description">{truncateToFourWords(product.description)}</div>
+                        )}
+                      </div>
+                    </div>
+                  </td>
+                  <td>{product.brand}</td>
+                  <td>
+                    {product.category 
+                      ? (typeof product.category === 'object' 
+                          ? (product.category.name || 'N/A') 
+                          : product.category)
+                      : 'N/A'}
+                  </td>
+                  <td>{product.subCategory}</td>
+                  <td>${product.price.toFixed(2)}</td>
+                  <td>{product.countInStock}</td>
+                  <td>
+                    <div className="rating-cell">
+                      <AiFillStar className="star-icon" />
+                      {product.rating.toFixed(1)}
+                    </div>
+                  </td>
+                  <td>
+                    <span className={`status-badge ${product.status.toLowerCase().replace(/\s+/g, '-')}`}>
+                      {product.status}
+                    </span>
+                  </td>
+                  <td>
+                    <div className={`action-menu ${hoveredRowId === product.id ? 'visible' : ''}`}>
+                      <div className="menu-container">
+                        <button 
+                          className="menu-btn" 
+                          title="More options"
+                          onClick={(e) => handleMenuClick(product.id, e)}
+                        >
+                          <MoreVertIcon className="menu-icon" />
+                        </button>
+                        {openMenuId === product.id && (
+                          <div className="dropdown-menu">
+                            <button 
+                              className="dropdown-item edit"
+                              onClick={() => handleEdit(product)}
+                              title="Edit product"
+                            >
+                              <EditOutlinedIcon className="dropdown-icon edit-icon" />
+                              <span>Edit</span>
+                            </button>
+                            <button 
+                              className="dropdown-item delete"
+                              onClick={() => handleDelete(product)}
+                              title="Delete product"
+                            >
+                              <DeleteOutlineIcon className="dropdown-icon delete-icon" />
+                              <span>Delete</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination */}
+        <div className="pagination-wrapper">
+          <div className="pagination-info">
+            Showing {startIndex + 1}-{Math.min(endIndex, totalProducts)} of {totalProducts} entries
           </div>
-        ) : (
-          products.map((item) => (
-            <div key={item.id} className="card product-card-v2" onMouseMove={handleMouseMove}>
-              <div className="product-image-wrapper">
-                {(Array.isArray(item.image) ? item.image : [item.image]).map((img, idx) => (
-                  <div key={idx} className="product-img-container">
-                    <img src={img} alt={`${item.name} ${idx}`} className="product-img" />
-                    {idx === 0 && (
-                      <>
-                        <div className={`glass-badge ${item.stock > 0 ? 'in-stock-badge' : 'out-of-stock-badge'}`}>
-                          {item.stock > 0 ? `${item.stock} IN STOCK` : 'SOLD OUT'}
-                        </div>
-                        {item.inFeatured && <div className="glass-badge featured-aura">FEATURED</div>}
-                      </>
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              <div className="product-info">
-                <div className="main-details">
-                  <div className="brand-sku-tag">
-                    <span className="brand-pill">{item.brand}</span>
-                    <span className="sku-id">#{item.number}</span>
-                  </div>
-                  <h4 className="product-name">{item.name}</h4>
-                  <p className="product-desc">{item.description}</p>
-                </div>
-
-                <footer className="meta-footer">
-                  <div className="rating-column">
-                    <StarIcon sx={{ fontSize: 18, color: '#f59e0b' }} />
-                    <span className="rating-val">{item.rating}</span>
-                  </div>
-
-                  <div className="price-box">
-                    <span className="label">PRICE</span>
-                    <span className="product-price">€{item.price}</span>
-                  </div>
-
-                  <div className="action-btns">
-                    <Button className="btn-ultra btn-primary-ultra">Edit</Button>
-                    <Button className="btn-ultra btn-danger-ultra">Delete</Button>
-                  </div>
-                </footer>
-              </div>
-            </div>
-          ))
-        )}
+          <div className="pagination-controls">
+            <button
+              className="pagination-btn"
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </button>
+            {[...Array(totalPages)].map((_, index) => (
+              <button
+                key={index + 1}
+                className={`pagination-btn ${currentPage === index + 1 ? 'active' : ''}`}
+                onClick={() => setCurrentPage(index + 1)}
+                disabled={loading}
+              >
+                {index + 1}
+              </button>
+            ))}
+            <button
+              className="pagination-btn"
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </button>
+          </div>
+        </div>
       </div>
     </div>
-  );
+  </div>
+
+  {/* Edit Dialog */}
+  <ProductEditDialog 
+    open={editDialogOpen} 
+    onClose={() => setEditDialogOpen(false)} 
+    product={selectedProduct}
+    onUpdate={handleEditUpdate}
+  />
+
+  {/* Delete Dialog */}
+  <ProductDeleteDialog 
+    open={deleteDialogOpen} 
+    onClose={() => setDeleteDialogOpen(false)} 
+    productName={selectedProduct?.name}
+    productId={selectedProduct?.id || selectedProduct?._id}
+    onConfirm={handleDeleteConfirm}
+  />
+                
+  <Snackbar
+    open={snackbar.open}
+    autoHideDuration={3000}
+    onClose={handleCloseSnackbar}
+    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+  >
+    <Alert
+      onClose={handleCloseSnackbar}
+      severity={snackbar.severity}
+      variant="filled"
+      sx={{ 
+        width: '100%',
+        bgcolor: snackbar.severity === 'error' ? '#d32f2f' : '#4caf50'
+      }}
+    >
+      {snackbar.message}
+    </Alert>
+  </Snackbar>
+</div>
+);
 };
 
 export default ProductList;

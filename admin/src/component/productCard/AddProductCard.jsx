@@ -8,6 +8,8 @@ import FormControlLabel from '@mui/material/FormControlLabel'
 import Switch from '@mui/material/Switch'
 import InputAdornment from '@mui/material/InputAdornment'
 import CloudUploadIcon from '@mui/icons-material/CloudUpload'
+import { IoMdCloseCircle } from "react-icons/io";
+
 
 function AddProductCard({ onCancel, onSubmit, initialData }) {
   const fileInputRef = useRef(null)
@@ -19,13 +21,14 @@ function AddProductCard({ onCancel, onSubmit, initialData }) {
     description: '',
     brand: '',
     rating: 0,
-    number: '',
+    subCategory: '',
     inFeatured: false
   })
 
   const [imageFiles, setImageFiles] = useState([])
   const [imagePreviews, setImagePreviews] = useState([])
   const [categories, setCategories] = useState([])
+  const [subCategories, setSubCategories] = useState([])
 
   useEffect(() => {
     if (initialData) {
@@ -37,7 +40,7 @@ function AddProductCard({ onCancel, onSubmit, initialData }) {
         description: initialData.description || '',
         brand: initialData.brand || '',
         rating: initialData.rating || 0,
-        number: initialData.number || '',
+        subCategory: initialData.subCategory || '',
         inFeatured: initialData.inFeatured || false
       })
       if (initialData.image) {
@@ -59,6 +62,20 @@ function AddProductCard({ onCancel, onSubmit, initialData }) {
       }
     }
     fetchCategories()
+  }, [])
+
+  useEffect(() => {
+    const fetchSubCategories = async () => {
+      try {
+        const res = await axios.get("http://localhost:4000/api/sub-categories")
+        if (res.data.success) {
+          setSubCategories(res.data.data)
+        }
+      } catch (error) {
+        console.error("Error fetching sub-categories:", error)
+      }
+    }
+    fetchSubCategories()
   }, [])
 
   const handleChange = (e) => {
@@ -89,6 +106,27 @@ function AddProductCard({ onCancel, onSubmit, initialData }) {
     setImagePreviews(prev => prev.filter((_, i) => i !== index))
   }
 
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      price: '',
+      category: '',
+      countInStock: '',
+      description: '',
+      brand: '',
+      rating: 0,
+      subCategory: '',
+      inFeatured: false
+    });
+    setImageFiles([]);
+    setImagePreviews([]);
+  };
+
+  const handleCancel = () => {
+    resetForm();
+    // Don't navigate, just clear the form
+  }
+
   const handleSubmit = (event) => {
     event.preventDefault()
     if (onSubmit) {
@@ -97,30 +135,52 @@ function AddProductCard({ onCancel, onSubmit, initialData }) {
   }
 
   return (
-    <div className="card add-product-card" style={{ maxWidth: '800px', width: '100%' }}>
+    <div className="card" style={{ maxWidth: '100%', width: '100%' }}>
       <div className="card-header">
         <div>
-          <div className="card-title">{initialData ? 'Edit Product' : 'Add Product'}</div>
+          <div className="card-title">{initialData ? 'Edit Product' : 'Product Information'}</div>
           <div className="card-subtitle">
-            {initialData ? 'Update product information and image.' : 'Create a new product with all details.'}
+            {initialData ? 'Update details and images for this product.' : 'Enter all details to create a new product.'}
           </div>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit}>
-        <Stack spacing={3} sx={{ mt: 3 }}>
-          {/* Row 1: Name and Brand */}
-          <Stack direction="row" spacing={2}>
-            <TextField
-              label="Product Name"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              fullWidth
-              variant="outlined"
-              size="small"
-              required
-            />
+      <form onSubmit={handleSubmit} className="form-vertical">
+        {/* Product Name (Full Width) */}
+        <div className="form-field">
+          <TextField
+            label="Product Name"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            fullWidth
+            variant="outlined"
+            size="small"
+            required
+            className="form-select-mui"
+          />
+        </div>
+
+        {/* Description (Full Width) */}
+        <div className="form-field">
+          <TextField
+            label="Description"
+            name="description"
+            value={formData.description}
+            onChange={handleChange}
+            multiline
+            rows={4}
+            fullWidth
+            variant="outlined"
+            size="small"
+            placeholder="Detailed description of the product..."
+            className="form-select-mui"
+          />
+        </div>
+
+        {/* Row: Brand and Category */}
+        <div className="form-row">
+          <div className="form-field">
             <TextField
               label="Brand"
               name="brand"
@@ -129,25 +189,10 @@ function AddProductCard({ onCancel, onSubmit, initialData }) {
               fullWidth
               variant="outlined"
               size="small"
+              className="form-select-mui"
             />
-          </Stack>
-
-          {/* Row 2: Price and Category */}
-          <Stack direction="row" spacing={2}>
-            <TextField
-              label="Price"
-              name="price"
-              type="number"
-              value={formData.price}
-              onChange={handleChange}
-              fullWidth
-              variant="outlined"
-              size="small"
-              required
-              InputProps={{
-                startAdornment: <InputAdornment position="start">€</InputAdornment>,
-              }}
-            />
+          </div>
+          <div className="form-field">
             <TextField
               select
               label="Category"
@@ -158,6 +203,7 @@ function AddProductCard({ onCancel, onSubmit, initialData }) {
               variant="outlined"
               size="small"
               required
+              className="form-select-mui"
             >
               <MenuItem value=""><em>Select category</em></MenuItem>
               {categories.map((cat) => (
@@ -166,10 +212,29 @@ function AddProductCard({ onCancel, onSubmit, initialData }) {
                 </MenuItem>
               ))}
             </TextField>
-          </Stack>
+          </div>
+        </div>
 
-          {/* Row 3: Stock and SKU (Number) */}
-          <Stack direction="row" spacing={2}>
+        {/* Row: Price and Stock */}
+        <div className="form-row">
+          <div className="form-field">
+            <TextField
+              label="Price"
+              name="price"
+              type="number"
+              value={formData.price}
+              onChange={handleChange}
+              fullWidth
+              variant="outlined"
+              size="small"
+              required
+              className="form-select-mui"
+              InputProps={{
+                startAdornment: <InputAdornment position="start">€</InputAdornment>,
+              }}
+            />
+          </div>
+          <div className="form-field">
             <TextField
               label="Count In Stock"
               name="countInStock"
@@ -179,39 +244,88 @@ function AddProductCard({ onCancel, onSubmit, initialData }) {
               fullWidth
               variant="outlined"
               size="small"
+              className="form-select-mui"
             />
+          </div>
+        </div>
+
+        {/* Row: Sub Category and Rating */}
+        <div className="form-row">
+          <div className="form-field">
             <TextField
-              label="SKU / Number"
-              name="number"
-              value={formData.number}
+              label="Sub Cat"
+              name="subCategory"
+              value={formData.subCategory}
               onChange={handleChange}
               fullWidth
               variant="outlined"
               size="small"
+              select
+              className="form-select-mui"
+            >
+              <MenuItem value="">
+                <em>Select a sub-cat</em>
+              </MenuItem>
+              {subCategories.map((subCat) => (
+                <MenuItem key={subCat._id} value={subCat._id}>
+                  {subCat.name}
+                </MenuItem>
+              ))}
+            </TextField>
+          </div>
+          <div className="form-field">
+            <TextField
+              label="Rating"
+              name="rating"
+              type="number"
+              value={formData.rating}
+              onChange={handleChange}
+              fullWidth
+              variant="outlined"
+              size="small"
+              className="form-select-mui"
+              inputProps={{ min: 0, max: 5, step: 0.1 }}
             />
-          </Stack>
+          </div>
+        </div>
 
-          {/* Modern Multiple Image Upload Area */}
-          <div className="image-upload-wrapper">
-            <span className="form-label" style={{ fontWeight: 600 }}>Product Images (Multiple)</span>
+        {/* Featured Toggle */}
+        <div className="form-field">
+          <FormControlLabel
+            control={
+              <Switch
+                name="inFeatured"
+                checked={formData.inFeatured}
+                onChange={handleChange}
+                color="primary"
+              />
+            }
+            label="Featured Product"
+            sx={{ ml: 0 }}
+          />
+        </div>
 
+        {/* Multiple Image Upload Area */}
+        <div className="form-field">
+          <label className="form-label">Product Images</label>
+
+          <div className="image-upload-wrapper" style={{ marginTop: '8px' }}>
             {imagePreviews.length === 0 ? (
               <div
-                className="image-upload-area"
+                className="file-upload-area"
                 onClick={() => fileInputRef.current?.click()}
               >
                 <input
                   type="file"
                   ref={fileInputRef}
-                  className="file-input-hidden"
+                  style={{ display: 'none' }}
                   accept="image/*"
                   multiple
                   onChange={handleImageChange}
                 />
-                <div className="upload-icon-box">
-                  <CloudUploadIcon sx={{ fontSize: 40 }} />
-                  <span>Click to upload product images</span>
-                  <span style={{ fontSize: '11px', opacity: 0.7 }}>(You can select multiple photos)</span>
+                <CloudUploadIcon sx={{ fontSize: 32, mb: 1, color: 'var(--text-muted)' }} />
+                <div className="file-upload-label">
+                  Click to select product images (multiple)
                 </div>
               </div>
             ) : (
@@ -224,79 +338,46 @@ function AddProductCard({ onCancel, onSubmit, initialData }) {
                       className="remove-img-btn"
                       onClick={() => handleRemoveImage(index)}
                     >
-                      ×
+                      < IoMdCloseCircle />
+
+
+
+
+
+
                     </button>
                   </div>
                 ))}
 
                 <div
-                  className="upload-more-card"
+                  className="file-upload-area"
                   onClick={() => fileInputRef.current?.click()}
+                  style={{ width: '100px', height: '100px', display: 'flex', flexDirection: 'column', padding: '8px' }}
                 >
                   <input
                     type="file"
                     ref={fileInputRef}
-                    className="file-input-hidden"
+                    style={{ display: 'none' }}
                     accept="image/*"
                     multiple
                     onChange={handleImageChange}
                   />
-                  <CloudUploadIcon sx={{ fontSize: 24 }} />
-                  <span>Add More</span>
+                  <CloudUploadIcon sx={{ fontSize: 20, color: 'var(--text-muted)' }} />
+                  <span style={{ fontSize: '11px', fontWeight: 600 }}>Add More</span>
                 </div>
               </div>
             )}
           </div>
+        </div>
 
-          {/* Row 5: Rating and Featured */}
-          <Stack direction="row" spacing={2} alignItems="center">
-            <TextField
-              label="Rating"
-              name="rating"
-              type="number"
-              value={formData.rating}
-              onChange={handleChange}
-              fullWidth
-              variant="outlined"
-              size="small"
-              inputProps={{ min: 0, max: 5, step: 0.1 }}
-            />
-            <FormControlLabel
-              control={
-                <Switch
-                  name="inFeatured"
-                  checked={formData.inFeatured}
-                  onChange={handleChange}
-                  color="primary"
-                />
-              }
-              label="Featured Product"
-              sx={{ width: '100%', ml: 1 }}
-            />
-          </Stack>
-
-          {/* Row 6: Description */}
-          <TextField
-            label="Description"
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            multiline
-            rows={4}
-            fullWidth
-            variant="outlined"
-            placeholder="Detailed description of the product..."
-          />
-
-          <Stack direction="row" justifyContent="flex-end" spacing={2} sx={{ mt: 2 }}>
-            <Button variant="outlined" color="inherit" onClick={onCancel}>
-              Cancel
-            </Button>
-            <Button type="submit" variant="contained" color="primary">
-              {initialData ? 'Update Product' : 'Save Product'}
-            </Button>
-          </Stack>
-        </Stack>
+        <div className="form-actions">
+          <button type="button" className="btn ghost" onClick={handleCancel}>
+            Cancel
+          </button>
+          <button type="submit" className="btn primary">
+            {initialData ? 'Update Product' : 'Upload Product'}
+          </button>
+        </div>
       </form>
     </div>
   )

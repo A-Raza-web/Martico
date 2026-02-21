@@ -3,11 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button'
 import axios from "axios";
-import Backdrop from '@mui/material/Backdrop';
-import CircularProgress from '@mui/material/CircularProgress';
 import './CategoryManagement.css';
 
-function UploadCategory({ refreshCategories, showNotification, setProgress }) {
+function UploadCategory({ refreshCategories, showNotification, setProgress, setParentLoading }) {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
@@ -15,7 +13,6 @@ function UploadCategory({ refreshCategories, showNotification, setProgress }) {
     image: null,
     imageName: ''
   });
-  const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
   const handleInputChange = (e) => {
@@ -84,8 +81,8 @@ function UploadCategory({ refreshCategories, showNotification, setProgress }) {
       return;
     }
 
-    setLoading(true);
     if (setProgress) setProgress(30);
+    if (setParentLoading) setParentLoading(true);
 
     try {
       const base64Image = await convertToBase64(formData.image);
@@ -108,7 +105,7 @@ function UploadCategory({ refreshCategories, showNotification, setProgress }) {
       console.error("Upload error:", error);
       if (showNotification) showNotification("Error uploading category", "error");
     } finally {
-      setLoading(false);
+      if (setParentLoading) setParentLoading(false);
       if (setProgress) setProgress(100);
     }
   };
@@ -126,12 +123,6 @@ function UploadCategory({ refreshCategories, showNotification, setProgress }) {
 
   return (
     <div className="card upload-banner-card">
-      <Backdrop
-        sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
-        open={loading}
-      >
-        <CircularProgress color="inherit" />
-      </Backdrop>
       <div className="card-header">
         <div>
           <div className="card-title">Upload Category</div>

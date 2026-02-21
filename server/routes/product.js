@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const Product = require('../models/product');
-const { upload, cloudinary: cloudinaryUtils } = require('../utils/cloudinary');
+const { upload,CloudinaryUtils } = require('../utils/cloudinary');
 const { rateLimiter } = require('../utils/rateLimiter');
+
 
 // GET / -> list all products with pagination and filtering
 router.get('/', async (req, res) => {
@@ -52,67 +53,71 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST /api/products/create
-router.post('/create', upload.single('image'), async (req, res) => {
+// Create Product
+router.post('/create', async (req, res) => {
   try {
     const {
       name,
       description,
+      images, // Array of base64 strings
       brand,
       price,
       category,
       countInStock,
-      rating,
       number,
       review,
       inFeatured
     } = req.body;
 
-    // Required fields validate
     if (!name || !price || !category) {
-      return res.status(400).json({
-        success: false,
-        message: 'Name, price, and category are required'
-      });
+      return res.status(400).json({ success: false, message: 'Name, price, and category are required' });
     }
 
-    // Check if image uploaded
-    if (!req.file) {
-      return res.status(400).json({
-        success: false,
-        message: 'Image file is required'
-      });
+    if (!images || !Array.isArray(images) || images.length === 0) {
+      return res.status(400).json({ success: false, message: 'At least one image is required' });
     }
 
-    // Build product object
-    const productData = {
+    // 1️⃣ Upload all images to Cloudinary
+    const uploadResults = await Promise.all(
+      images.map((imgBase64, index) =>
+        CloudinaryUtils.uploadImage(imgBase64, `product_${Date.now()}_${index}`)
+      )
+    );
+
+    // 2️⃣ Build images array with url and public_id
+    const productImages = uploadResults.map(res => ({
+      url: res.url,
+      public_id: res.public_id
+    }));
+
+    // 3️⃣ Save product in DB
+    const product = new Product({
       name,
       description,
+      images: productImages, // New field: array of images
       brand,
-      price: parseFloat(price),
+      price,
       category,
-      countInStock: parseInt(countInStock) || 0,
-      rating: parseFloat(rating) || 0,
+      countInStock,
       number,
       review: review ? (Array.isArray(review) ? review : [review]) : [],
-      inFeatured: inFeatured === 'true',
-      image: req.file.path,             // Cloudinary URL
-      imagePublicId: req.file.filename  // Cloudinary filename
-    };
+      inFeatured: inFeatured === 'true'
+    });
 
-    // Save to DB
-    const newProduct = new Product(productData);
-    const saved = await newProduct.save();
+    await product.save();
 
     res.status(201).json({
       success: true,
-      data: saved,
-      message: 'Product created successfully'
+      message: 'Product created successfully',
+      product
     });
 
-  } catch (err) {
-    console.error('Error creating product:', err);
-    res.status(500).json({ success: false, message: 'Server error' });
+  } catch (error) {
+    console.error('Error creating product:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
   }
 });
 
@@ -172,27 +177,23 @@ router.put('/:id', upload.single('image'), async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
 
-    if (!product) {
-      return res.status(404).json({ success: false, message: 'Product not found' });
-    }
-
-    // Delete image from Cloudinary if exists
-    if (product.imagePublicId) {
-      await cloudinaryUtils.deleteImage(product.imagePublicId);
+    // Delete all images from Cloudinary
+    if (product.images && product.images.length > 0) {
+      const publicIds = product.images.map(img => img.public_id);
+      if (publicIds.length > 0) await CloudinaryUtils.deleteMultipleImages(publicIds);
     }
 
     await Product.findByIdAndDelete(req.params.id);
 
-    res.json({
-      success: true,
-      message: 'Product deleted successfully'
-    });
+    res.json({ success: true, message: 'Product deleted successfully' });
   } catch (err) {
     console.error('Error deleting product:', err);
     res.status(500).json({ success: false, message: 'Server error' });
   }
 });
+
 
 
 module.exports = router;
