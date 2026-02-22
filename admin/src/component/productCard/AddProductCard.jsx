@@ -67,7 +67,7 @@ function AddProductCard({ onCancel, onSubmit, initialData }) {
   useEffect(() => {
     const fetchSubCategories = async () => {
       try {
-        const res = await axios.get("http://localhost:4000/api/sub-categories")
+        const res = await axios.get("http://localhost:4000/api/subcategories")
         if (res.data.success) {
           setSubCategories(res.data.data)
         }

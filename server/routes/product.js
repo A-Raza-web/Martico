@@ -19,6 +19,7 @@ router.get('/', async (req, res) => {
 
     const products = await Product.find(filter)
       .populate('category')
+      .populate('subCategory')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit));
@@ -44,7 +45,9 @@ router.get('/', async (req, res) => {
 // GET /:id -> get product by id
 router.get('/:id', async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id).populate('category');
+    const product = await Product.findById(req.params.id)
+      .populate('category')
+      .populate('subCategory');
     if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
     res.json({ success: true, data: product });
   } catch (err) {
@@ -63,8 +66,9 @@ router.post('/create', async (req, res) => {
       brand,
       price,
       category,
+      subCategory,
       countInStock,
-      number,
+      rating,
       review,
       inFeatured
     } = req.body;
@@ -98,8 +102,9 @@ router.post('/create', async (req, res) => {
       brand,
       price,
       category,
+      subCategory: subCategory || null,
       countInStock,
-      number,
+      rating: rating || 0,
       review: review ? (Array.isArray(review) ? review : [review]) : [],
       inFeatured: inFeatured === 'true'
     });
@@ -124,7 +129,7 @@ router.post('/create', async (req, res) => {
 // PUT /:id -> update a product
 router.put('/:id', upload.single('image'), async (req, res) => {
   try {
-    const { name, description, brand, price, category, countInStock, rating, number, review, inFeatured } = req.body;
+    const { name, description, brand, price, category, subCategory, countInStock, rating, review, inFeatured } = req.body;
 
     let updateData = {};
 
@@ -133,9 +138,9 @@ router.put('/:id', upload.single('image'), async (req, res) => {
     if (brand) updateData.brand = brand;
     if (price) updateData.price = parseFloat(price);
     if (category) updateData.category = category;
+    if (subCategory !== undefined) updateData.subCategory = subCategory || null;
     if (countInStock !== undefined) updateData.countInStock = parseInt(countInStock);
     if (rating) updateData.rating = parseFloat(rating);
-    if (number) updateData.number = number;
     if (review) updateData.review = Array.isArray(review) ? review : [review];
     if (inFeatured !== undefined) updateData.inFeatured = inFeatured === 'true';
 
@@ -156,7 +161,7 @@ router.put('/:id', upload.single('image'), async (req, res) => {
       req.params.id,
       updateData,
       { new: true, runValidators: true }
-    ).populate('category');
+    ).populate('category').populate('subCategory');
 
     if (!updated) {
       return res.status(404).json({ success: false, message: 'Product not found' });

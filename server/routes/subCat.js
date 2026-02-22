@@ -8,7 +8,7 @@ const SubCategory = require('../models/subCat');
 // ============================
 // ✅ Create SubCategory
 // ============================
-router.post('/', async (req, res) => {
+router.post('/create', async (req, res) => {
   try {
     const { name, category } = req.body;
 
@@ -55,68 +55,6 @@ router.get('/', async (req, res) => {
   }
 });
 
-
-// ============================
-// ✅ Get Single SubCategory
-// ============================
-router.get('/:id', async (req, res) => {
-  try {
-    const subCategory = await SubCategory.findById(req.params.id)
-      .populate('category');
-
-    if (!subCategory) {
-      return res.status(404).json({
-        success: false,
-        message: 'SubCategory not found'
-      });
-    }
-
-    res.json({
-      success: true,
-      data: subCategory
-    });
-
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
-  }
-});
-
-
-// ============================
-// ✅ Update SubCategory
-// ============================
-router.put('/:id', async (req, res) => {
-  try {
-    const { name, category } = req.body;
-
-    const subCategory = await SubCategory.findByIdAndUpdate(
-      req.params.id,
-      { name, category },
-      { new: true }
-    );
-
-    if (!subCategory) {
-      return res.status(404).json({
-        success: false,
-        message: 'SubCategory not found'
-      });
-    }
-
-    res.json({
-      success: true,
-      data: subCategory
-    });
-
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
-  }
-});
 
 
 // ============================

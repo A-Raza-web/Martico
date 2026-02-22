@@ -96,7 +96,12 @@ const ProductList = () => {
           description: product.description || '',
           brand: product.brand || 'Unknown',
           category: product.category || null, // This will now be the full category object or null
-          subCategory: product.subCategory || 'N/A',
+          subCategory: product.subCategory || null, // Keep the full subCategory object for edit dialog
+          subCategoryName: product.subCategory 
+            ? (typeof product.subCategory === 'object' 
+                ? product.subCategory.name 
+                : product.subCategory)
+            : 'N/A',
           price: product.price,
           countInStock: product.countInStock || 0,
           revenue: product.price * (product.countInStock || 0), // Calculate revenue
@@ -331,7 +336,7 @@ const ProductList = () => {
                           : product.category)
                       : 'N/A'}
                   </td>
-                  <td>{product.subCategory}</td>
+                  <td>{product.subCategoryName}</td>
                   <td>${product.price.toFixed(2)}</td>
                   <td>{product.countInStock}</td>
                   <td>

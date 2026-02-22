@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from "axios";
 import Button from '@mui/material/Button';
-import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -23,22 +21,8 @@ function SubCategoryManagement() {
     navigate(`/sub-categories/${tab}`);
   };
 
-  const [subCategories, setSubCategories] = useState([
-    { _id: '1', category: 'electronics', name: 'Mobile Phones' },
-    { _id: '2', category: 'electronics', name: 'Laptops' },
-    { _id: '3', category: 'electronics', name: 'Tablets' },
-    { _id: '4', category: 'fashion', name: 'Men T-Shirts' },
-    { _id: '5', category: 'fashion', name: 'Women Dresses' },
-    { _id: '6', category: 'fashion', name: 'Shoes' },
-    { _id: '7', category: 'electronics', name: 'Smartwatches' },
-    { _id: '8', category: 'fashion', name: 'Caps & Hats' },
-    { _id: '9', category: 'home', name: 'Bedsheets & Pillows' },
-  ]);
-  const [categories, setCategories] = useState([
-    { _id: 'electronics', name: 'Electronics', image: ['https://via.placeholder.com/100?text=Electronics'] },
-    { _id: 'fashion', name: 'Fashion', image: ['https://via.placeholder.com/100?text=Fashion'] },
-    { _id: 'home', name: 'Home & Kitchen', image: ['https://via.placeholder.com/100?text=Home'] },
-  ]);
+  const [subCategories, setSubCategories] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
 
@@ -62,7 +46,7 @@ function SubCategoryManagement() {
   const fetchSubCategories = async () => {
     setProgress(30);
     try {
-      const res = await axios.get("http://localhost:4000/api/sub-categories");
+      const res = await axios.get("http://localhost:4000/api/subcategories");
       if (res.data.success) {
         setSubCategories(res.data.data);
       }
@@ -99,13 +83,23 @@ function SubCategoryManagement() {
     return () => clearTimeout(timer);
   }, [activeTab]);
 
-  // Clear Sub Category Name
-  const handleDeleteClick = (subCategoryId) => {
-    setSubCategories(prev => 
-      prev.map(item => 
-        item._id === subCategoryId ? { ...item, name: '' } : item
-      )
-    );
+  // Delete Sub Category
+  const handleDeleteClick = async (subCategoryId) => {
+    setLoading(true);
+    setProgress(30);
+    try {
+      const res = await axios.delete(`http://localhost:4000/api/subcategories/${subCategoryId}`);
+      if (res.data.success) {
+        showSnackbar("Sub Category deleted successfully!", "success");
+        fetchSubCategories(); // Refresh the list
+      }
+    } catch (error) {
+      console.error("Error deleting sub-category:", error);
+      showSnackbar("Error deleting sub-category", "error");
+    } finally {
+      setLoading(false);
+      setProgress(100);
+    }
   };
 
   const getCategoryName = (categoryId) => {
@@ -190,47 +184,42 @@ function SubCategoryManagement() {
                   </thead>
                   <tbody>
                     {categories.map((category) => {
-                      const categorySubCategories = subCategories.filter(sub => sub.category === category._id);
+                      const categorySubCategories = subCategories.filter(sub => {
+                        // Handle both populated category object and plain ID
+                        const subCategoryId = sub.category?._id || sub.category;
+                        return subCategoryId === category._id;
+                      });
                       return (
-                        <React.Fragment key={category._id}>
-                          <tr className="category-row">
-                            <td className="table-image">
-                              {category.image && category.image[0] ? (
-                                <img src={category.image[0]} alt={category.name} />
-                              ) : (
-                                <img src="https://via.placeholder.com/50?text=No+Image" alt="No Image" />
-                              )}
-                            </td>
-                            <td colSpan="2" className="table-category-header">{category.name}</td>
-                          </tr>
-                          {categorySubCategories.length > 0 ? (
-                            categorySubCategories.map((subCategory) => (
-                              <tr key={subCategory._id} className="subcategory-item-row">
-                                <td></td>
-                                <td className="subcategory-indent"></td>
-                                <td className="table-subcategory">
-                                  <div className="subcategory-cell">
+                        <tr key={category._id} className="category-row-single">
+                          <td className="table-image">
+                            {category.image && category.image[0] ? (
+                              <img src={category.image[0]} alt={category.name} />
+                            ) : (
+                              <img src="https://via.placeholder.com/50?text=No+Image" alt="No Image" />
+                            )}
+                          </td>
+                          <td className="table-category-name">{category.name}</td>
+                          <td className="subcategory-list-cell">
+                            {categorySubCategories.length > 0 ? (
+                              <div className="subcategory-tags">
+                                {categorySubCategories.map((subCategory) => (
+                                  <div key={subCategory._id} className="subcategory-tag">
                                     <span>{subCategory.name}</span>
-                                    {subCategory.name && (
-                                      <button
-                                        className="close-icon-btn"
-                                        onClick={() => handleDeleteClick(subCategory._id)}
-                                        title="Clear sub-category"
-                                      >
-                                        <IoMdCloseCircle />
-                                      </button>
-                                    )}
+                                    <button
+                                      className="subcategory-close-btn"
+                                      onClick={() => handleDeleteClick(subCategory._id)}
+                                      title="Remove sub-category"
+                                    >
+                                      <IoMdCloseCircle />
+                                    </button>
                                   </div>
-                                </td>
-                              </tr>
-                            ))
-                          ) : (
-                            <tr className="empty-category-row">
-                              <td></td>
-                              <td colSpan="2" className="empty-subcategories">No sub-categories</td>
-                            </tr>
-                          )}
-                        </React.Fragment>
+                                ))}
+                              </div>
+                            ) : (
+                              <span className="empty-subcategories">No sub-categories</span>
+                            )}
+                          </td>
+                        </tr>
                       );
                     })}
                   </tbody>

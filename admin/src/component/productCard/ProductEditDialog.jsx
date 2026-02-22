@@ -24,7 +24,7 @@ function ProductEditDialog({ open, onClose, product, onUpdate }) {
     category: '',
     price: '',
     countInStock: '',
-    number: '',
+    subCategory: '',
     rating: '',
     inFeatured: false,
     image: []
@@ -32,6 +32,7 @@ function ProductEditDialog({ open, onClose, product, onUpdate }) {
   const [imageFiles, setImageFiles] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [subCategories, setSubCategories] = useState([]);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
@@ -50,6 +51,21 @@ function ProductEditDialog({ open, onClose, product, onUpdate }) {
     fetchCategories();
   }, []);
 
+  // Fetch subcategories on mount
+  useEffect(() => {
+    const fetchSubCategories = async () => {
+      try {
+        const res = await axios.get("http://localhost:4000/api/subcategories");
+        if (res.data.success) {
+          setSubCategories(res.data.data);
+        }
+      } catch (error) {
+        console.error("Error fetching sub-categories:", error);
+      }
+    };
+    fetchSubCategories();
+  }, []);
+
   // Populate form when product changes
   useEffect(() => {
     if (product && open) {
@@ -60,7 +76,7 @@ function ProductEditDialog({ open, onClose, product, onUpdate }) {
         category: product.category?._id || product.category || '',
         price: product.price || '',
         countInStock: product.countInStock || '',
-        number: product.number || '',
+        subCategory: product.subCategory?._id || product.subCategory || '',
         rating: product.rating || '',
         inFeatured: product.inFeatured || false,
         image: product.image || []
@@ -159,7 +175,7 @@ function ProductEditDialog({ open, onClose, product, onUpdate }) {
         category: editFormData.category,
         price: parseFloat(editFormData.price),
         countInStock: parseInt(editFormData.countInStock) || 0,
-        number: editFormData.number,
+        subCategory: editFormData.subCategory || null,
         rating: parseFloat(editFormData.rating) || 0,
         inFeatured: editFormData.inFeatured,
         review: [] // Initialize empty review array
@@ -316,17 +332,25 @@ function ProductEditDialog({ open, onClose, product, onUpdate }) {
             />
           </Stack>
 
-          {/* SKU / Number and Rating Row */}
+          {/* Sub Category and Rating Row */}
           <Stack direction="row" spacing={2}>
             <TextField
               fullWidth
-              label="SKU / Number"
-              name="number"
-              value={editFormData.number}
+              label="Sub Category"
+              name="subCategory"
+              value={editFormData.subCategory}
               onChange={handleInputChange}
               variant="outlined"
               size="small"
-            />
+              select
+            >
+              <MenuItem value=""><em>Select sub-category</em></MenuItem>
+              {subCategories.map((subCat) => (
+                <MenuItem key={subCat._id} value={subCat._id}>
+                  {subCat.name}
+                </MenuItem>
+              ))}
+            </TextField>
             <TextField
               fullWidth
               label="Rating"

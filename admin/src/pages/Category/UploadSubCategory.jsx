@@ -78,7 +78,7 @@ function UploadSubCategory({ refreshSubCategories, showNotification, setProgress
 
       console.log("Sending Data:", payload);
 
-      await axios.post("http://localhost:4000/api/sub-categories/create", payload);
+      await axios.post("http://localhost:4000/api/subcategories/create", payload);
 
       // Refresh the list and redirect
       if (showNotification) showNotification("Sub Category uploaded successfully!", "success");
