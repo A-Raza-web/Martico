@@ -389,6 +389,9 @@
   font-weight: 600;
   color: var(--text-primary);
   font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .product-description {

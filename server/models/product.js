@@ -12,7 +12,25 @@ const ProductSchema = new mongoose.Schema({
   ],
 
   brand: { type: String, trim: true },
-  price: { type: Number, required: true, min: 0 },
+
+  price: { 
+    type: Number, 
+    required: true, 
+    min: 0 
+  },
+
+  // Old Price
+  oldPrice: {
+    type: Number,
+    min: 0
+  },
+
+  // Discount Percentage
+  discount: {
+    type: Number,
+    min: 0,
+    max: 100
+  },
 
   category: {
     type: mongoose.Schema.Types.ObjectId,
@@ -22,8 +40,7 @@ const ProductSchema = new mongoose.Schema({
 
   subCategory: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'SubCategory',
-    required: false
+    ref: 'SubCategory'
   },
 
   countInStock: { type: Number, default: 0, min: 0 },

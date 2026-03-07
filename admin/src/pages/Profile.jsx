@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Button from '@mui/material/Button'
 import TextField from '@mui/material/TextField'
 import MenuItem from '@mui/material/MenuItem'
@@ -13,11 +13,39 @@ const Profile = () => {
     const [profileImage, setProfileImage] = useState(null)
     const [imagePreview, setImagePreview] = useState(null)
 
+    // Get user data from localStorage on component mount
+    const [storedUser, setStoredUser] = useState(null)
+
+    useEffect(() => {
+        const userData = localStorage.getItem('user')
+        console.log('Profile: Loading user data from localStorage:', userData)
+        if (userData) {
+            try {
+                const parsedUser = JSON.parse(userData)
+                console.log('Profile: Parsed user:', parsedUser)
+                setStoredUser(parsedUser)
+                setFormData({
+                    fullName: parsedUser.name || '',
+                    email: parsedUser.email || '',
+                    phone: parsedUser.phone || '',
+                    role: parsedUser.role || 'Admin',
+                    currentPassword: '',
+                    newPassword: '',
+                    confirmPassword: ''
+                })
+            } catch (e) {
+                console.error('Error parsing user data:', e)
+            }
+        } else {
+            console.log('Profile: No user data found in localStorage')
+        }
+    }, [])
+
     const [formData, setFormData] = useState({
-        fullName: 'Ahmad Raza',
-        email: 'ahmadraza@example.com',
-        phone: '+1 234 567 890',
-        role: 'Store Manager',
+        fullName: '',
+        email: '',
+        phone: '',
+        role: 'Admin',
         currentPassword: '',
         newPassword: '',
         confirmPassword: ''
@@ -40,10 +68,52 @@ const Profile = () => {
         }
     }
 
-    const handleSaveProfile = (e) => {
+    const handleSaveProfile = async (e) => {
         e.preventDefault()
         console.log('Saving profile:', formData)
-        // Implement API call here
+        
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token')
+        
+        if (!token) {
+            alert('Please log in first')
+            return
+        }
+
+        try {
+            const response = await fetch('http://localhost:4000/api/auth/profile', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    name: formData.fullName,
+                    phone: formData.phone,
+                    role: formData.role
+                })
+            })
+
+            const data = await response.json()
+
+            if (data._id) {
+                // Update localStorage with new user data
+                if (storedUser) {
+                    const updatedUser = {
+                        ...storedUser,
+                        name: formData.fullName,
+                        phone: formData.phone,
+                        role: formData.role
+                    }
+                    localStorage.setItem('user', JSON.stringify(updatedUser))
+                }
+                alert('Profile updated successfully!')
+            } else {
+                alert(data.message || 'Failed to update profile')
+            }
+        } catch (err) {
+            console.error('Error updating profile:', err)
+            alert('Error updating profile. Please try again.')
+        }
     }
 
     const handleUpdatePassword = (e) => {

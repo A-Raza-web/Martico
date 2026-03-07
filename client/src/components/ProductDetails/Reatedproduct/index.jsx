@@ -1,6 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Button from '@mui/material/Button';
-import img1 from "../../../assets/images/banner1.jpg";
 import pro from '../../../assets/images/pro.jpg';
 import { IoArrowForward } from "react-icons/io5";
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -13,8 +12,13 @@ import { RxExitFullScreen } from "react-icons/rx";
 import { IoChevronBack, IoChevronForward } from "react-icons/io5";
 import './List1.css';
 import ProductModel from '../../ProductModel';
+import { useNavigate } from 'react-router-dom';
 
-const List1 = () => {
+const Reatedproduct = ({ product }) => {
+  // State for related products
+  const [relatedProducts, setRelatedProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   // -------------------------------
   //  PRODUCT MODAL STATE
@@ -32,64 +36,40 @@ const List1 = () => {
     setSelectedProduct(null);
   };
 
+  // Fetch related products from the same category
+  useEffect(() => {
+    const fetchRelatedProducts = async () => {
+      if (!product?.category?._id) {
+        setLoading(false);
+        return;
+      }
 
-  const products = [
-    {
-      id: 1,
-      name: "Leather Handbag",
-      desc: "Stylish red PU handbag for women",
-      img: "https://api.spicezgold.com/download/file_1734527074321_ksc-khatushyam-collection-red-pu-for-women-handheld-bag-product-images-rvvxdnkjfy-0-202405290001.webp",
-      oldPrice: 79.99,
-      newPrice: 49.99,
-      rating: 4.5,
-      inStock: true,
-    },
-    {
-      id: 2,
-      name: "Smart Watch",
-      desc: "Waterproof Bluetooth wrist watch",
-      img: pro,
-      oldPrice: 99.99,
-      newPrice: 69.99,
-      rating: 4.0,
-      inStock: false,
-    },
-    {
-      id: 3,
-      name: "Trendy Shoes",
-      desc: "Comfortable sneakers for men",
-      img: pro,
-      oldPrice: 89.99,
-      newPrice: 59.99,
-      rating: 3.5,
-      inStock: true,
-    },
-    {
-      id: 4,
-      name: "Classic Sunglasses",
-      desc: "UV-protected stylish eyewear",
-      img: pro,
-      oldPrice: 59.99,
-      newPrice: 39.99,
-      rating: 5,
-      inStock: true,
-    },
-    {
-      id: 5,
-      name: "Designer Wallet",
-      desc: "Premium leather men’s wallet",
-      img: pro,
-      oldPrice: 49.99,
-      newPrice: 29.99,
-      rating: 4.2,
-      inStock: false,
-    },
-  ];
+      try {
+        setLoading(true);
+        const res = await fetch(`http://localhost:4000/api/products?limit=10&category=${product.category._id}`);
+        const json = await res.json();
+        
+        if (json.success && json.data) {
+          // Filter out the current product and limit to 5
+          const filtered = json.data
+            .filter(p => p._id !== product._id)
+            .slice(0, 5);
+          setRelatedProducts(filtered);
+        }
+      } catch (err) {
+        console.error("Error fetching related products:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRelatedProducts();
+  }, [product]);
 
   const renderStars = (rating) => {
     const stars = [];
-    const fullStars = Math.floor(rating);
-    const hasHalf = rating % 1 !== 0;
+    const fullStars = Math.floor(rating || 0);
+    const hasHalf = (rating || 0) % 1 !== 0;
     for (let i = 0; i < 5; i++) {
       if (i < fullStars) stars.push(<FaStar key={i} className="text-warning" />);
       else if (i === fullStars && hasHalf)
@@ -100,9 +80,55 @@ const List1 = () => {
   };
 
   const getDiscountPercent = (oldPrice, newPrice) => {
+    if (!oldPrice || !newPrice) return 0;
     const discount = ((oldPrice - newPrice) / oldPrice) * 100;
     return Math.round(discount);
   };
+
+  // Truncate description to 8 words
+  const truncateWords = (text, wordLimit = 8) => {
+    if (!text) return '';
+    const words = text.split(/\s+/);
+    if (words.length <= wordLimit) return text;
+    return words.slice(0, wordLimit).join(' ') + '...';
+  };
+
+  // Transform API product to display format
+  const transformProduct = (item) => ({
+    id: item._id,
+    name: item.name,
+    nameShort: truncateName(item.name || ''),
+    desc: item.description,
+    img: item.images?.[0]?.url || pro,
+    oldPrice: item.oldPrice || (item.price * 1.2),
+    newPrice: item.price,
+    rating: item.rating || 0,
+    inStock: (item.countInStock || 0) > 0,
+  });
+
+  // Truncate product name to 3 words
+  const truncateName = (text) => {
+    if (!text) return '';
+    const words = text.split(/\s+/);
+    if (words.length <= 3) return text;
+    return words.slice(0, 3).join(' ') + '...';
+  };
+
+  const displayProducts = relatedProducts.map(transformProduct);
+
+  // Navigate to product detail page
+  const handleProductClick = (productId) => {
+    navigate(`/product/${productId}`);
+  };
+
+  // Show loading or empty state if no related products
+  if (loading) {
+    return null;
+  }
+
+  if (displayProducts.length === 0) {
+    return null;
+  }
 
   return (
     <section className="homeProducts py-5">
@@ -146,9 +172,13 @@ const List1 = () => {
                   swiper.navigation.update();
                 }}
               >
-                {products.map((item) => (
+                {displayProducts.map((item) => (
                   <SwiperSlide key={item.id}>
-                    <div className='card productCard shadow-sm border-0 rounded-lg'>
+                    <div 
+                      className='card productCard shadow-sm border-0 rounded-lg' 
+                      onClick={() => handleProductClick(item.id)}
+                      style={{ cursor: 'pointer' }}
+                    >
                       <div className='imgWrapper overflow-hidden position-relative'>
                         <img src={item.img} alt={item.name} className="img-fluid w-100" />
 
@@ -161,7 +191,7 @@ const List1 = () => {
                         <div className="imageIcons">
 
                           {/*  FULL SCREEN ICON CLICK → OPEN MODAL */}
-                          <span className="iconBox" onClick={() => handleOpenModal(item)}>
+                          <span className="iconBox" onClick={(e) => { e.stopPropagation(); handleOpenModal(item); }}>
                             <RxExitFullScreen />
                           </span>
 
@@ -173,8 +203,8 @@ const List1 = () => {
                       </div>
 
                       <div className='card-body text-start px-3'>
-                        <h6 className='card-title mb-1 fw-bold'>{item.name}</h6>
-                        <p className='text-muted small mb-1'>{item.desc}</p>
+                        <h6 className='card-title mb-1 fw-bold'>{item.nameShort || truncateName(item.name)}</h6>
+                        <p className='text-muted small mb-1'>{truncateWords(item.desc)}</p>
 
                         <div className={`stockStatus ${item.inStock ? 'inStock' : 'outStock'}`}>
                           {item.inStock ? "In Stock" : "Out of Stock"}
@@ -185,8 +215,8 @@ const List1 = () => {
                         </div>
 
                         <div className='priceBox mt-1'>
-                          <span className='oldPrice me-2'>${item.oldPrice.toFixed(2)}</span>
-                          <span className='newPrice ml-3'>${item.newPrice.toFixed(2)}</span>
+                          <span className='oldPrice me-2'>${(item.oldPrice || 0).toFixed(2)}</span>
+                          <span className='newPrice ml-3'>${(item.newPrice || 0).toFixed(2)}</span>
                         </div>
                       </div>
                     </div>
@@ -210,4 +240,4 @@ const List1 = () => {
   );
 };
 
-export default List1;
+export default Reatedproduct;

@@ -1,5 +1,7 @@
+import { useState } from "react";
 import {
   FaStar,
+  FaRegStar,
   FaShoppingCart,
   FaHeart,
   FaMinus,
@@ -9,52 +11,135 @@ import Pro from "../../../assets/images/pro.jpg";
 import Button from '@mui/material/Button';
 
 
-const ProductInfo = ({ qty, setQty, onAddToCart }) => {
+const ProductInfo = ({ product, qty, setQty, onAddToCart, cartLoading }) => {
+  // Get product images - handle both array and single image formats
+  const productImages = product?.images || [];
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  
+  const mainImage = productImages[selectedImageIndex]?.url || Pro;
+
+  // Calculate discount percentage
+  const discountPercent = product?.oldPrice && product?.price 
+    ? Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100)
+    : 0;
+
+  // Format price
+  const currentPrice = product?.price?.toFixed(2) || "0.00";
+  const oldPrice = product?.oldPrice?.toFixed(2) || null;
+
+  // Check stock status
+  const inStock = product?.countInStock > 0;
+  const stockText = inStock ? "In Stock" : "Out of Stock";
+
+  // Get category name
+  const categoryName = product?.category?.name || "Uncategorized";
+
+  // Render stars based on rating
+  const renderStars = (rating) => {
+    const stars = [];
+    const fullStars = Math.floor(rating || 0);
+    const hasHalf = (rating || 0) % 1 !== 0;
+    
+    for (let i = 0; i < 5; i++) {
+      if (i < fullStars) {
+        stars.push(<FaStar key={i} className="text-warning" />);
+      } else if (i === fullStars && hasHalf) {
+        stars.push(<FaStar key={i} className="text-warning opacity-50" />);
+      } else {
+        stars.push(<FaRegStar key={i} className="text-muted" />);
+      }
+    }
+    return stars;
+  };
+
+  // Get review count
+  const reviewCount = product?.review?.length || 0;
+
+  // Handle thumbnail click
+  const handleThumbnailClick = (index) => {
+    setSelectedImageIndex(index);
+  };
+
   return (
     <section className="product-details-section py-5">
       <div className="container">
-        <div className="row bg-white p-4 rounded-4   align-items-center">
+        <div className="row bg-white p-4 p-lg-5 rounded-4 align-items-center shadow-lg product-details-card">
 
           {/* IMAGE */}
-          <div className="col-md-6 mb-4 mb-md-0">
-            <div className="product-img-wrapper overflow-hidden rounded-4 border shadow-sm">
+          <div className="col-md-4 mt-0 mb-0">
+            {/* Main Image */}
+            <div className="product-img-wrapper overflow-hidden rounded-4 border shadow-sm mb-3">
               <img
-                src={Pro}
-                alt="Product"
+                src={mainImage}
+                alt={product?.name || "Product"}
                 className="img-fluid w-100 h-100 object-fit-cover transition-zoom"
               />
             </div>
+            
+            {/* Thumbnail Images */}
+            {productImages.length > 1 && (
+              <div className="thumbnail-images d-flex gap-2 justify-content-center">
+                {productImages.map((img, index) => (
+                  <div 
+                    key={index}
+                    className={`thumbnail-wrapper ${selectedImageIndex === index ? 'active' : ''}`}
+                    onClick={() => handleThumbnailClick(index)}
+                    style={{
+                      width: '80px',
+                      height: '80px',
+                      borderRadius: '8px',
+                      overflow: 'hidden',
+                      cursor: 'pointer',
+                      border: selectedImageIndex === index ? '2px solid #2DE1C2' : '2px solid transparent',
+                      opacity: selectedImageIndex === index ? 1 : 0.7,
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <img
+                      src={img.url}
+                      alt={`${product?.name || "Product"} ${index + 1}`}
+                      className="img-fluid w-100 h-100 object-fit-cover"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* INFO */}
-          <div className="col-md-6 ">
+          <div className="col-md-8 ">
             
             <h1 className="fw-bold mb-2 ">
-              All Natural Italian-style Chicken Meatballs
+              {product?.name || "Product Name"}
             </h1>
             <div className="mb-3">
-              <span className="badge bg-soft-success me-2">In Stock</span>
-              <span className="text-muted small ml-2">SKU: MB-001</span>
+              <span className={`badge ${inStock ? 'bg-soft-success' : 'bg-danger'}`}>
+                {stockText}
+              </span>
+              <span className="text-muted small ml-2">SKU: {product?._id?.slice(-6) || "N/A"}</span>
             </div>
 
             <div className="d-flex align-items-center gap-3 mb-3">
               <div className="text-warning small ml-1">
-                <FaStar /><FaStar /><FaStar /><FaStar /><FaStar />
+                {renderStars(product?.rating || 0)}
               </div>
               <span className="text-muted small border-start ps-3 ml-2 mt-1">
-                23 Reviews
+                {reviewCount} Reviews
               </span>
             </div>
 
             <div className="d-flex align-items-center gap-3 mb-4">
-              <h2 className="price-tag fw-bold mb-0">$12.99</h2>
-              <del className="text-muted ml-3">$15.99</del>
-              <span className="badge1  ml-2">Save 20%</span>
+              <h2 className="price-tag fw-bold mb-0">${currentPrice}</h2>
+              {oldPrice && (
+                <del className="text-muted ml-3">${oldPrice}</del>
+              )}
+              {discountPercent > 0 && (
+                <span className="badge1 ml-2">Save {discountPercent}%</span>
+              )}
             </div>
 
             <p className="text-muted mb-4">
-              Premium quality Italian-style chicken meatballs made with
-              all-natural ingredients.
+              {product?.description || "No description available."}
             </p>
 
             {/* QTY + BUTTONS */}
@@ -82,13 +167,14 @@ const ProductInfo = ({ qty, setQty, onAddToCart }) => {
 
               <div className="d-flex flex-grow-1 p-3">
                 <Button
-                  className="btn btn-primary  ml-2 mt-2 btn-lg flex-grow-1 d-flex  justify-content-center"
+                  className="btn btn-primary ml-2 mt-2 btn-lg flex-grow-1 d-flex justify-content-center"
                   onClick={onAddToCart}
+                  disabled={!inStock || cartLoading}
                 >
                   <FaShoppingCart /> 
-                  <span className="ml-2">Add to Cart </span> 
+                  <span className="ml-2">{cartLoading ? "Adding..." : inStock ? "Add to Cart" : "Out of Stock"}</span> 
                 </Button>
-                <Button className="btn btn-outline-danger ml-4  btn-lg">
+                <Button className="btn btn-outline-danger ml-4 btn-lg">
                   <FaHeart />
                 </Button>  
                 
@@ -98,7 +184,13 @@ const ProductInfo = ({ qty, setQty, onAddToCart }) => {
 
             <hr />
             <p className="small text-muted mb-0">
-              Category: <strong>Frozen Foods</strong>
+              Category: <strong>{categoryName}</strong>
+              {product?.brand && (
+                <>
+                  <span className="mx-2">|</span>
+                  Brand: <strong>{product.brand}</strong>
+                </>
+              )}
             </p>
           </div>
 

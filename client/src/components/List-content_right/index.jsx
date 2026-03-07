@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Button from "@mui/material/Button";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
+import { useNavigate } from "react-router-dom";
 
 import { FaAngleDown, FaStar, FaRegStar } from "react-icons/fa6";
 import { BiGridSmall, BiSolidGrid } from "react-icons/bi";
@@ -14,284 +15,17 @@ import pro from "../../assets/images/pro.jpg";
 import "./content_right.css";
 import ProductModel from '../ProductModel';
 
-
-
-// Products (same as List1)
-const products = [
-  {
-    id: 1,
-    name: "Leather Handbag",
-    desc: "Stylish red PU handbag for women",
-    img: "https://api.spicezgold.com/download/file_1734527074321_ksc-khatushyam-collection-red-pu-for-women-handheld-bag-product-images-rvvxdnkjfy-0-202405290001.webp",
-    oldPrice: 79.99,
-    newPrice: 49.99,
-    rating: 4.5,
-    inStock: true,
-  },
-  {
-    id: 2,
-    name: "Smart Watch",
-    desc: "Waterproof Bluetooth wrist watch",
-    img: pro,
-    oldPrice: 99.99,
-    newPrice: 69.99,
-    rating: 4.0,
-    inStock: false,
-  },
-  {
-    id: 3,
-    name: "Trendy Shoes",
-    desc: "Comfortable sneakers for men",
-    img: pro,
-    oldPrice: 89.99,
-    newPrice: 59.99,
-    rating: 3.5,
-    inStock: true,
-  }, {
-    id: 4,
-    name: "Trendy Shoes",
-    desc: "Comfortable sneakers for men",
-    img: pro,
-    oldPrice: 89.99,
-    newPrice: 59.99,
-    rating: 3.5,
-    inStock: true,
-  }, {
-    id: 5,
-    name: "Trendy Shoes",
-    desc: "Comfortable sneakers for men",
-    img: pro,
-    oldPrice: 89.99,
-    newPrice: 59.99,
-    rating: 3.5,
-    inStock: true,
-  }, {
-    id: 6,
-    name: "Trendy Shoes",
-    desc: "Comfortable sneakers for men",
-    img: pro,
-    oldPrice: 89.99,
-    newPrice: 59.99,
-    rating: 3.5,
-    inStock: true,
-  }, {
-    id: 7,
-    name: "Trendy Shoes",
-    desc: "Comfortable sneakers for men",
-    img: pro,
-    oldPrice: 89.99,
-    newPrice: 59.99,
-    rating: 3.5,
-    inStock: true,
-  }, {
-    id: 8,
-    name: "Trendy Shoes",
-    desc: "Comfortable sneakers for men",
-    img: pro,
-    oldPrice: 89.99,
-    newPrice: 59.99,
-    rating: 3.5,
-    inStock: true,
-  }, {
-    id: 9,
-    name: "Trendy Shoes",
-    desc: "Comfortable sneakers for men",
-    img: pro,
-    oldPrice: 89.99,
-    newPrice: 59.99,
-    rating: 3.5,
-    inStock: true,
-  }, {
-    id: 10,
-    name: "Trendy Shoes",
-    desc: "Comfortable sneakers for men",
-    img: pro,
-    oldPrice: 89.99,
-    newPrice: 59.99,
-    rating: 3.5,
-    inStock: true,
-  }, {
-    id: 11,
-    name: "Trendy Shoes",
-    desc: "Comfortable sneakers for men",
-    img: pro,
-    oldPrice: 89.99,
-    newPrice: 59.99,
-    rating: 3.5,
-    inStock: true,
-  }, {
-    id: 12,
-    name: "Trendy Shoes",
-    desc: "Comfortable sneakers for men",
-    img: pro,
-    oldPrice: 89.99,
-    newPrice: 59.99,
-    rating: 3.5,
-    inStock: true,
-  }, {
-    id: 13,
-    name: "Trendy Shoes",
-    desc: "Comfortable sneakers for men",
-    img: pro,
-    oldPrice: 89.99,
-    newPrice: 59.99,
-    rating: 3.5,
-    inStock: true,
-  }, {
-    id: 14,
-    name: "Trendy Shoes",
-    desc: "Comfortable sneakers for men",
-    img: pro,
-    oldPrice: 89.99,
-    newPrice: 59.99,
-    rating: 3.5,
-    inStock: true,
-  }, {
-    id: 15,
-    name: "Trendy Shoes",
-    desc: "Comfortable sneakers for men",
-    img: pro,
-    oldPrice: 89.99,
-    newPrice: 59.99,
-    rating: 3.5,
-    inStock: true,
-  }, {
-    id: 16,
-    name: "Trendy Shoes",
-    desc: "Comfortable sneakers for men",
-    img: pro,
-    oldPrice: 89.99,
-    newPrice: 59.99,
-    rating: 3.5,
-    inStock: true,
-  }, {
-    id: 17,
-    name: "Trendy Shoes",
-    desc: "Comfortable sneakers for men",
-    img: pro,
-    oldPrice: 89.99,
-    newPrice: 59.99,
-    rating: 3.5,
-    inStock: true,
-  }, {
-    id: 18,
-    name: "Trendy Shoes",
-    desc: "Comfortable sneakers for men",
-    img: pro,
-    oldPrice: 89.99,
-    newPrice: 59.99,
-    rating: 3.5,
-    inStock: true,
-  }, {
-    id: 19,
-    name: "Trendy Shoes",
-    desc: "Comfortable sneakers for men",
-    img: pro,
-    oldPrice: 89.99,
-    newPrice: 59.99,
-    rating: 3.5,
-    inStock: true,
-  }, {
-    id: 20,
-    name: "Trendy Shoes",
-    desc: "Comfortable sneakers for men",
-    img: pro,
-    oldPrice: 89.99,
-    newPrice: 59.99,
-    rating: 3.5,
-    inStock: true,
-  }, {
-    id: 21,
-    name: "Trendy Shoes",
-    desc: "Comfortable sneakers for men",
-    img: pro,
-    oldPrice: 89.99,
-    newPrice: 59.99,
-    rating: 3.5,
-    inStock: true,
-  }, {
-    id: 22,
-    name: "Trendy Shoes",
-    desc: "Comfortable sneakers for men",
-    img: pro,
-    oldPrice: 89.99,
-    newPrice: 59.99,
-    rating: 3.5,
-    inStock: true,
-  }, {
-    id: 23,
-    name: "Trendy Shoes",
-    desc: "Comfortable sneakers for men",
-    img: pro,
-    oldPrice: 89.99,
-    newPrice: 59.99,
-    rating: 3.5,
-    inStock: true,
-  }, {
-    id: 24,
-    name: "Trendy Shoes",
-    desc: "Comfortable sneakers for men",
-    img: pro,
-    oldPrice: 89.99,
-    newPrice: 59.99,
-    rating: 3.5,
-    inStock: true,
-  }, {
-    id: 25,
-    name: "Trendy Shoes",
-    desc: "Comfortable sneakers for men",
-    img: pro,
-    oldPrice: 89.99,
-    newPrice: 59.99,
-    rating: 3.5,
-    inStock: true,
-  }, {
-    id: 26,
-    name: "Trendy Shoes",
-    desc: "Comfortable sneakers for men",
-    img: pro,
-    oldPrice: 89.99,
-    newPrice: 59.99,
-    rating: 3.5,
-    inStock: true,
-  }, {
-    id: 27,
-    name: "Trendy Shoes",
-    desc: "Comfortable sneakers for men",
-    img: pro,
-    oldPrice: 89.99,
-    newPrice: 59.99,
-    rating: 3.5,
-    inStock: true,
-  }, {
-    id: 28,
-    name: "Trendy Shoes",
-    desc: "Comfortable sneakers for men",
-    img: pro,
-    oldPrice: 89.99,
-    newPrice: 59.99,
-    rating: 3.5,
-    inStock: true,
-  }, {
-    id: 29,
-    name: "Trendy Shoes",
-    desc: "Comfortable sneakers for men",
-    img: pro,
-    oldPrice: 89.99,
-    newPrice: 59.99,
-    rating: 3.5,
-    inStock: true,
-  }, {
-    id: 30,
-    name: "Trendy Shoes",
-    desc: "Comfortable sneakers for men",
-    img: pro,
-    oldPrice: 89.99,
-    newPrice: 59.99,
-    rating: 3.5,
-    inStock: true,
-  },
-];
+const apiProducts = async (categoryId) => {
+  let url = 'http://localhost:4000/api/products?limit=24';
+  if (categoryId && categoryId !== 'all') url += `&category=${categoryId}`;
+  const res = await fetch(url);
+  const json = await res.json();
+  if (!json.success) {
+    console.error('API Error:', json.message);
+    return [];
+  }
+  return json.data || json;
+};
 
 //  Rating stars
 const renderStars = (rating) => {
@@ -312,9 +46,29 @@ const renderStars = (rating) => {
 const discountPercent = (oldP, newP) =>
   Math.round(((oldP - newP) / oldP) * 100);
 
-const ContentRight = () => {
+// Truncate description to 8 words
+const truncateWords = (text, wordLimit = 8) => {
+  if (!text) return '';
+  const words = text.split(/\s+/);
+  if (words.length <= wordLimit) return text;
+  return words.slice(0, wordLimit).join(' ') + '...';
+};
+
+// Truncate product name to 3 words
+const truncateName = (text) => {
+  if (!text) return '';
+  const words = text.split(/\s+/);
+  if (words.length <= 3) return text;
+  return words.slice(0, 3).join(' ') + '...';
+};
+
+const ContentRight = ({ categoryId, priceFilter, brandFilter }) => {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [openModal, setOpenModal] = useState(false);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   const handleOpenModal = (product) => {
     setSelectedProduct(product);
@@ -325,11 +79,51 @@ const ContentRight = () => {
     setOpenModal(false);
     setSelectedProduct(null);
   };
+
+  // Navigate to product detail page
+  const handleProductClick = (productId) => {
+    navigate(`/product/${productId}`);
+  };
   const [anchorEl, setAnchorEl] = useState(null);
   const [showCount, setShowCount] = useState(10);
   const [view, setView] = useState("grid-3");
 
   const open = Boolean(anchorEl);
+  useEffect(() => {
+    let mounted = true;
+    setLoading(true);
+    apiProducts(categoryId)
+      .then(list => {
+        if (!mounted) return;
+        // Filter by price if priceFilter is set
+        let filteredList = list;
+        if (priceFilter !== null) {
+          filteredList = filteredList.filter(item => {
+            const price = item.newPrice ?? (item.price ?? 0);
+            return price <= priceFilter;
+          });
+        }
+        // Filter by brand if brandFilter is set
+        if (brandFilter && brandFilter.length > 0) {
+          filteredList = filteredList.filter(item => {
+            return item.brand && brandFilter.includes(item.brand);
+          });
+        }
+        setProducts(filteredList);
+        setError(null);
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setProducts([]);
+        setError('Failed to load products');
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [categoryId, priceFilter, brandFilter]);
 
   return (
     <div className="content_right">
@@ -367,36 +161,47 @@ const ContentRight = () => {
 
       {/* Products */}
       <div className={`productListing ${view}`}>
-        {products.slice(0, showCount).map((item) => (
-          <div className="productCard shadow-sm rounded-lg" key={item.id}>
+        {loading ? (
+          <div className="p-4">Loading products...</div>
+        ) : error ? (
+          <div className="p-4 text-danger">{error}</div>
+        ) : products.length === 0 ? (
+          <div className="p-4">No products available</div>
+        ) : products.slice(0, showCount).map((item) => (
+          <div 
+            className="productCard shadow-sm rounded-lg" 
+            key={item._id || item.id}
+            onClick={() => handleProductClick(item._id || item.id)}
+            style={{ cursor: 'pointer' }}
+          >
             <div className="imgWrapper position-relative overflow-hidden">
-              <img src={item.img} alt={item.name} className="img-fluid w-100" />
+              <img src={(item.images && item.images[0]?.url) || item.img || pro} alt={item.name} className="img-fluid w-100" />
 
               <span className="discountBadge">
-                {discountPercent(item.oldPrice, item.newPrice)}% OFF
+                {discountPercent(item.oldPrice ?? ((item.price ?? 0) * 1.2), item.newPrice ?? (item.price ?? 0))}% OFF
               </span>
 
               <div className="imageIcons">
-                <span className="iconBox" onClick={() => handleOpenModal(item)}><RxExitFullScreen /></span>
+                <span className="iconBox" onClick={(e) => { e.stopPropagation(); handleOpenModal(item); }}><RxExitFullScreen /></span>
                 <span className="iconBox"><IoMdHeartEmpty /></span>
               </div>
             </div>
 
             <div className="card-body text-start px-3">
-              <h6 className="fw-bold mb-1">{item.name}</h6>
-              <p className="text-muted small mb-1">{item.desc}</p>
+              <h6 className="fw-bold mb-1">{truncateName(item.name)}</h6>
+              <p className="text-muted small mb-1">{truncateWords(item.description || item.desc)}</p>
 
               <div className={`stockStatus ${item.inStock ? "inStock" : "outStock"}`}>
-                {item.inStock ? "In Stock" : "Out of Stock"}
+                {(item.countInStock ?? item.inStock) ? "In Stock" : "Out of Stock"}
               </div>
 
               <div className="rating mb-2">
-                {renderStars(item.rating)}
+                {renderStars(item.rating ?? 0)}
               </div>
 
               <div className="priceBox">
-                <span className="oldPrice">${item.oldPrice}</span>
-                <span className="newPrice ms-2">${item.newPrice}</span>
+                <span className="oldPrice">${(item.oldPrice ?? ((item.price ?? 0) * 1.2)).toFixed ? (item.oldPrice ?? ((item.price ?? 0) * 1.2)).toFixed(2) : item.oldPrice}</span>
+                <span className="newPrice ms-2">${(item.newPrice ?? (item.price ?? 0)).toFixed ? (item.newPrice ?? (item.price ?? 0)).toFixed(2) : item.newPrice}</span>
               </div>
             </div>
           </div>

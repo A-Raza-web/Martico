@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { NavLink, useLocation } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import Button from '@mui/material/Button'
 import { useTheme } from '../../context/ThemeContext'
 import './sideNav.css'
@@ -18,6 +18,11 @@ import SlideshowIcon from '@mui/icons-material/SlideshowOutlined'
 import CategoryIcon from '@mui/icons-material/CategoryOutlined'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import MoreVertIcon from '@mui/icons-material/MoreVert'
+import Menu from '@mui/material/Menu'
+import MenuItem from '@mui/material/MenuItem'
+import LogoutIcon from '@mui/icons-material/Logout'
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
+import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 
 const navItems = [
   { id: 'dashboard', label: 'Dashboard', group: 'General', path: '/', icon: <DashboardIcon sx={{ fontSize: 20 }} /> },
@@ -96,22 +101,46 @@ const navItems = [
   { id: 'marketing', label: 'Marketing', group: 'Analytics', path: '/marketing', icon: <CampaignIcon sx={{ fontSize: 20 }} /> },
 ]
 
-import Menu from '@mui/material/Menu'
-import MenuItem from '@mui/material/MenuItem'
-import LogoutIcon from '@mui/icons-material/Logout'
-
-function SideNavbar() {
+function SideNavbar({ sidebarOpen, setSidebarOpen }) {
   const { theme, toggleTheme } = useTheme()
   const location = useLocation()
+  const navigate = useNavigate()
   const [expandedItems, setExpandedItems] = useState({})
   const [anchorEl, setAnchorEl] = useState(null)
+  const [userData, setUserData] = useState({ name: 'Guest', role: 'User' })
   const open = Boolean(anchorEl)
+
+  // Load user data from localStorage
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user')
+    if (storedUser) {
+      try {
+        const parsed = JSON.parse(storedUser)
+        setUserData({
+          name: parsed.name || 'User',
+          email: parsed.email || '',
+          phone: parsed.phone || '',
+          role: parsed.role || 'Admin'
+        })
+      } catch (e) {
+        console.error('Error parsing user data:', e)
+      }
+    }
+  }, [])
 
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget)
   }
   const handleClose = () => {
     setAnchorEl(null)
+  }
+
+  const handleLogout = () => {
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+    sessionStorage.removeItem('token')
+    sessionStorage.removeItem('user')
+    navigate('/login')
   }
 
   const toggleExpand = (id) => {
@@ -173,7 +202,36 @@ function SideNavbar() {
   }
 
   return (
-    <aside className="sidebar">
+    <>
+      {/* Floating Toggle Button - shifts position based on sidebar state */}
+      <Button
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        sx={{
+          position: 'fixed',
+          left: sidebarOpen ? 'auto' : '20px',
+          right: sidebarOpen ? '20px' : 'auto',
+          top: '50%',
+          transform: 'translateY(-50%)',
+          minWidth: 0,
+          width: 36,
+          height: 36,
+          borderRadius: '50%',
+          bgcolor: 'var(--bg-card)',
+          color: 'var(--text-primary)',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+          border: '1px solid var(--border-color)',
+          transition: 'all 0.3s ease',
+          zIndex: 1200,
+          '&:hover': {
+            bgcolor: 'var(--primary-color)',
+            color: 'white',
+          }
+        }}
+      >
+        {sidebarOpen ? <ChevronRightIcon /> : <ChevronLeftIcon />}
+      </Button>
+
+      <aside className={`sidebar ${sidebarOpen ? '' : 'hidden'}`}>
       <div className="sidebar-header">
         <img src={logo} alt="Martico Logo" className="logo-full" />
       </div>
@@ -206,10 +264,12 @@ function SideNavbar() {
         </div>
 
         <div className="user-profile">
-          <div className="avatar">AR</div>
+          <div className="avatar">
+            {userData.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+          </div>
           <div className="user-details">
-            <div className="user-name">Ahmad Raza</div>
-            <div className="user-role">Store Manager</div>
+            <div className="user-name">{userData.name}</div>
+            <div className="user-role">{userData.role}</div>
           </div>
           <Button
             size="small"
@@ -252,9 +312,10 @@ function SideNavbar() {
             </MenuItem>
             <hr style={{ margin: '4px 0', border: 'none', borderTop: '1px solid var(--border-color)' }} />
             <MenuItem
-              component={NavLink}
-              to="/login"
-              onClick={handleClose}
+              onClick={() => {
+                handleClose()
+                handleLogout()
+              }}
               sx={{
                 fontSize: '13px',
                 py: 1,
@@ -271,6 +332,7 @@ function SideNavbar() {
         </div>
       </div>
     </aside>
+    </>
   )
 }
 

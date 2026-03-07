@@ -1,11 +1,93 @@
-import { Link } from 'react-router-dom'
-import Button from '@mui/material/Button'
-import TextField from '@mui/material/TextField'
-import Box from '@mui/material/Box'
-import logo from '../assets/logo.png'
-import './Auth.css'
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
+import Box from '@mui/material/Box';
+import logo from '../assets/logo.png';
+import './Auth.css';
 
 const Signup = () => {
+    const navigate = useNavigate();
+    const [formData, setFormData] = useState({
+        name: '',
+        email: '',
+        phone: '',
+        password: '',
+        confirmPassword: ''
+    });
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+
+    const handleChange = (e) => {
+        setFormData({
+            ...formData,
+            [e.target.name]: e.target.value
+        });
+        setError('');
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        
+        // Validation
+        if (!formData.name || !formData.email || !formData.password || !formData.confirmPassword) {
+            setError('Please fill in all fields');
+            return;
+        }
+
+        if (formData.password !== formData.confirmPassword) {
+            setError('Passwords do not match');
+            return;
+        }
+
+        if (formData.password.length < 6) {
+            setError('Password must be at least 6 characters');
+            return;
+        }
+
+        setLoading(true);
+        setError('');
+
+        try {
+            const response = await fetch('http://localhost:4000/api/auth/signup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    name: formData.name,
+                    email: formData.email,
+                    phone: formData.phone,
+                    password: formData.password
+                })
+            });
+
+            const data = await response.json();
+
+            if (data._id) {
+                // Store token and user info
+                const userData = {
+                    _id: data._id,
+                    name: data.name,
+                    email: data.email,
+                    phone: data.phone
+                }
+                console.log('Signup: Storing user data:', userData)
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('user', JSON.stringify(userData));
+                // Redirect to dashboard
+                navigate('/');
+            } else {
+                setError(data.message || 'Signup failed. Please try again.');
+            }
+        } catch (err) {
+            setError('Network error. Please try again.');
+            console.error('Signup error:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="auth-page">
             <div className="auth-wrapper">
@@ -16,34 +98,74 @@ const Signup = () => {
                         <p className="auth-subtitle">Join Martico Admin Panel today</p>
                     </div>
 
-                    <form className="auth-form" onSubmit={(e) => e.preventDefault()}>
+                    {error && (
+                        <div className="alert alert-danger" style={{ 
+                            padding: '10px', 
+                            marginBottom: '15px', 
+                            borderRadius: '8px',
+                            backgroundColor: '#fee2e2',
+                            color: '#dc2626',
+                            fontSize: '14px'
+                        }}>
+                            {error}
+                        </div>
+                    )}
+
+                    <form className="auth-form" onSubmit={handleSubmit}>
                         <TextField
                             label="Full Name"
+                            name="name"
                             type="text"
                             variant="outlined"
                             fullWidth
                             size="small"
+                            value={formData.name}
+                            onChange={handleChange}
+                            disabled={loading}
                         />
                         <TextField
                             label="Email Address"
+                            name="email"
                             type="email"
                             variant="outlined"
                             fullWidth
                             size="small"
+                            value={formData.email}
+                            onChange={handleChange}
+                            disabled={loading}
+                        />
+                        <TextField
+                            label="Phone Number"
+                            name="phone"
+                            type="tel"
+                            variant="outlined"
+                            fullWidth
+                            size="small"
+                            value={formData.phone}
+                            onChange={handleChange}
+                            disabled={loading}
                         />
                         <TextField
                             label="Password"
+                            name="password"
                             type="password"
                             variant="outlined"
                             fullWidth
                             size="small"
+                            value={formData.password}
+                            onChange={handleChange}
+                            disabled={loading}
                         />
                         <TextField
                             label="Confirm Password"
+                            name="confirmPassword"
                             type="password"
                             variant="outlined"
                             fullWidth
                             size="small"
+                            value={formData.confirmPassword}
+                            onChange={handleChange}
+                            disabled={loading}
                         />
 
                         <Button
@@ -52,9 +174,10 @@ const Signup = () => {
                             size="large"
                             fullWidth
                             type="submit"
+                            disabled={loading}
                             sx={{ borderRadius: '12px', py: 1.5, mt: 1 }}
                         >
-                            Sign up
+                            {loading ? 'Creating Account...' : 'Sign up'}
                         </Button>
 
                         <div className="auth-divider">or</div>
@@ -63,6 +186,7 @@ const Signup = () => {
                             variant="outlined"
                             fullWidth
                             className="google-btn"
+                            disabled={loading}
                             startIcon={
                                 <svg className="google-icon" viewBox="0 0 24 24">
                                     <path
@@ -97,4 +221,4 @@ const Signup = () => {
     )
 }
 
-export default Signup
+export default Signup;

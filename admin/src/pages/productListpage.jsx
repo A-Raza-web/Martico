@@ -103,6 +103,8 @@ const ProductList = () => {
                 : product.subCategory)
             : 'N/A',
           price: product.price,
+          oldPrice: product.oldPrice || 0,
+          discount: product.discount || 0,
           countInStock: product.countInStock || 0,
           revenue: product.price * (product.countInStock || 0), // Calculate revenue
           sales: product.countInStock || 0,
@@ -299,6 +301,7 @@ const ProductList = () => {
                 <th>Category</th>
                 <th>Sub Category</th>
                 <th>Price</th>
+                <th>Old Price</th>
                 <th>Stock</th>
                 <th>Rating</th>
                 <th>Status</th>
@@ -321,7 +324,7 @@ const ProductList = () => {
                         className="product-image"
                       />
                       <div className="product-info">
-                        <div className="product-name">{product.name}</div>
+                        <div className="product-name">{truncateToFourWords(product.name)}</div>
                         {product.description && (
                           <div className="product-description">{truncateToFourWords(product.description)}</div>
                         )}
@@ -337,7 +340,14 @@ const ProductList = () => {
                       : 'N/A'}
                   </td>
                   <td>{product.subCategoryName}</td>
-                  <td>${product.price.toFixed(2)}</td>
+                  <td>
+                    <div className="price-cell">
+                      <span className="current-price">${product.price.toFixed(2)}</span>
+                    </div>
+                  </td>
+                  <td>
+                    {product.oldPrice > 0 ? `$${product.oldPrice.toFixed(2)}` : '-'}
+                  </td>
                   <td>{product.countInStock}</td>
                   <td>
                     <div className="rating-cell">

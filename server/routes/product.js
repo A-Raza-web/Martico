@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Product = require('../models/product');
+const Category = require('../models/category');
 const { upload,CloudinaryUtils } = require('../utils/cloudinary');
 const { rateLimiter } = require('../utils/rateLimiter');
 
@@ -13,7 +14,21 @@ router.get('/', async (req, res) => {
 
     // Build filter object
     const filter = {};
-    if (category) filter.category = category;
+    
+    // Handle category - can be either ID or name
+    if (category) {
+      // Check if it's a valid ObjectId or try to find by name
+      const mongoose = require('mongoose');
+      if (mongoose.Types.ObjectId.isValid(category)) {
+        filter.category = category;
+      } else {
+        // Try to find category by name
+        const cat = await Category.findOne({ name: { $regex: new RegExp('^' + category + '$', 'i') } });
+        if (cat) {
+          filter.category = cat._id;
+        }
+      }
+    }
     if (inFeatured === 'true') filter.inFeatured = true;
     if (search) filter.name = { $regex: search, $options: 'i' };
 
@@ -42,6 +57,18 @@ router.get('/', async (req, res) => {
   }
 });
 
+// GET /brands -> get all unique brands
+router.get('/brands', async (req, res) => {
+  try {
+    const brands = await Product.distinct('brand');
+    const filteredBrands = brands.filter(brand => brand && brand.trim() !== '');
+    res.json({ success: true, data: filteredBrands });
+  } catch (err) {
+    console.error('Error fetching brands:', err);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
 // GET /:id -> get product by id
 router.get('/:id', async (req, res) => {
   try {
@@ -62,9 +89,11 @@ router.post('/create', async (req, res) => {
     const {
       name,
       description,
-      images, // Array of base64 strings
+      images,
       brand,
       price,
+      oldPrice,
+      discount,
       category,
       subCategory,
       countInStock,
@@ -73,52 +102,111 @@ router.post('/create', async (req, res) => {
       inFeatured
     } = req.body;
 
+    // ---------------------------
+    // Basic Validation
+    // ---------------------------
     if (!name || !price || !category) {
-      return res.status(400).json({ success: false, message: 'Name, price, and category are required' });
+      return res.status(400).json({
+        success: false,
+        message: "Name, price and category are required"
+      });
     }
 
     if (!images || !Array.isArray(images) || images.length === 0) {
-      return res.status(400).json({ success: false, message: 'At least one image is required' });
+      return res.status(400).json({
+        success: false,
+        message: "At least one image is required"
+      });
     }
 
-    // 1️⃣ Upload all images to Cloudinary
-    const uploadResults = await Promise.all(
-      images.map((imgBase64, index) =>
-        CloudinaryUtils.uploadImage(imgBase64, `product_${Date.now()}_${index}`)
+    // ---------------------------
+    // Upload Images to Cloudinary
+    // ---------------------------
+    const uploadedImages = await Promise.all(
+      images.map((img, index) =>
+        CloudinaryUtils.uploadImage(
+          img,
+          `product_${Date.now()}_${index}`
+        )
       )
     );
 
-    // 2️⃣ Build images array with url and public_id
-    const productImages = uploadResults.map(res => ({
-      url: res.url,
-      public_id: res.public_id
+    const formattedImages = uploadedImages.map(img => ({
+      url: img.url,
+      public_id: img.public_id
     }));
 
-    // 3️⃣ Save product in DB
+    // ---------------------------
+    // Price Handling
+    // ---------------------------
+    const numericPrice = parseFloat(price);
+    const numericOldPrice = oldPrice ? parseFloat(oldPrice) : null;
+
+    if (isNaN(numericPrice) || numericPrice < 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid price value"
+      });
+    }
+
+    if (numericOldPrice && numericOldPrice < numericPrice) {
+      return res.status(400).json({
+        success: false,
+        message: "Old price must be greater than current price"
+      });
+    }
+
+    // ---------------------------
+    // Discount Logic
+    // ---------------------------
+    let finalDiscount = 0;
+
+    if (discount !== undefined) {
+      const numericDiscount = parseFloat(discount);
+
+      if (numericDiscount < 0 || numericDiscount > 100) {
+        return res.status(400).json({
+          success: false,
+          message: "Discount must be between 0 and 100"
+        });
+      }
+
+      finalDiscount = numericDiscount;
+    } else if (numericOldPrice) {
+      finalDiscount = Math.round(
+        ((numericOldPrice - numericPrice) / numericOldPrice) * 100
+      );
+    }
+
+    // ---------------------------
+    // Create Product
+    // ---------------------------
     const product = new Product({
       name,
       description,
-      images: productImages, // New field: array of images
+      images: formattedImages,
       brand,
-      price,
+      price: numericPrice,
+      oldPrice: numericOldPrice,
+      discount: finalDiscount,
       category,
       subCategory: subCategory || null,
-      countInStock,
-      rating: rating || 0,
+      countInStock: countInStock ? parseInt(countInStock) : 0,
+      rating: rating ? parseFloat(rating) : 0,
       review: review ? (Array.isArray(review) ? review : [review]) : [],
-      inFeatured: inFeatured === 'true'
+      inFeatured: inFeatured === true || inFeatured === 'true'
     });
 
     await product.save();
 
     res.status(201).json({
       success: true,
-      message: 'Product created successfully',
+      message: "Product created successfully",
       product
     });
 
   } catch (error) {
-    console.error('Error creating product:', error);
+    console.error("Error creating product:", error);
     res.status(500).json({
       success: false,
       message: error.message
@@ -127,54 +215,54 @@ router.post('/create', async (req, res) => {
 });
 
 // PUT /:id -> update a product
-router.put('/:id', upload.single('image'), async (req, res) => {
+router.put('/:id', async (req, res) => {
   try {
-    const { name, description, brand, price, category, subCategory, countInStock, rating, review, inFeatured } = req.body;
+    const { images, ...otherFields } = req.body;
 
-    let updateData = {};
+    const product = await Product.findById(req.params.id);
+    if (!product) {
+      return res.status(404).json({ success: false, message: "Product not found" });
+    }
 
-    if (name) updateData.name = name;
-    if (description) updateData.description = description;
-    if (brand) updateData.brand = brand;
-    if (price) updateData.price = parseFloat(price);
-    if (category) updateData.category = category;
-    if (subCategory !== undefined) updateData.subCategory = subCategory || null;
-    if (countInStock !== undefined) updateData.countInStock = parseInt(countInStock);
-    if (rating) updateData.rating = parseFloat(rating);
-    if (review) updateData.review = Array.isArray(review) ? review : [review];
-    if (inFeatured !== undefined) updateData.inFeatured = inFeatured === 'true';
+    let updateData = { ...otherFields };
 
-    // Handle image update
-    if (req.file) {
-      const product = await Product.findById(req.params.id);
-
-      // Delete old image from Cloudinary if exists
-      if (product.imagePublicId) {
-        await cloudinaryUtils.deleteImage(product.imagePublicId);
+    // ✅ Agar new images aa rahi hain
+    if (images && Array.isArray(images) && images.length > 0) {
+      // Purani images delete karo Cloudinary se
+      if (product.images && product.images.length > 0) {
+        const oldPublicIds = product.images
+          .filter(img => img.public_id)
+          .map(img => img.public_id);
+        if (oldPublicIds.length > 0) {
+          await CloudinaryUtils.deleteMultipleImages(oldPublicIds);
+        }
       }
 
-      updateData.image = req.file.secure_url;
-      updateData.imagePublicId = req.file.public_id;
+      // Nee images upload karo Cloudinary par
+      const uploadResults = await Promise.all(
+        images.map((imgBase64, index) =>
+          CloudinaryUtils.uploadImage(imgBase64, `product_${Date.now()}_${index}`)
+        )
+      );
+
+      // Build images array with url and public_id
+      updateData.images = uploadResults.map(res => ({
+        url: res.url,
+        public_id: res.public_id
+      }));
     }
 
     const updated = await Product.findByIdAndUpdate(
       req.params.id,
       updateData,
-      { new: true, runValidators: true }
-    ).populate('category').populate('subCategory');
+      { new: true }
+    );
 
-    if (!updated) {
-      return res.status(404).json({ success: false, message: 'Product not found' });
-    }
+    res.json({ success: true, data: updated });
 
-    res.json({
-      success: true,
-      data: updated,
-      message: 'Product updated successfully'
-    });
-  } catch (err) {
-    console.error('Error updating product:', err);
-    res.status(500).json({ success: false, message: 'Server error' });
+  } catch (error) {
+    console.error("FULL ERROR:", error);
+    res.status(500).json({ success: false, message: "Server Error" });
   }
 });
 
@@ -198,7 +286,5 @@ router.delete('/:id', async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error' });
   }
 });
-
-
 
 module.exports = router;

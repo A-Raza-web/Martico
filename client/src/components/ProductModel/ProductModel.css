@@ -7,7 +7,7 @@
   border: 1px solid #ccc;
   background-color: #fff;
   color: #333;
-  padding: 6px 15px;
+  padding: 10px 12px;
   font-weight: 600;
   font-size: 14px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.15);
@@ -24,6 +24,7 @@
   display: flex;
   gap: 30px;
   padding: 20px;
+  position: relative;
 }
 
 /* LEFT – IMAGE + SLIDER */
@@ -50,22 +51,30 @@
 .amazonActiveThumb { border-color:#ffa41c; }
 
 /* CENTER – DETAILS */
-.amazonCenter { flex: 1.4; }
-.amazonTitle { font-size: 23px; font-weight: 700; }
-.amazonRatings { font-size: 16px; margin: 8px 0; color: #ffa41c; display:flex; align-items:center; }
+.amazonCenter { 
+  flex: 1.4; 
+  margin: 18px;
+  margin-top: 60px;
+  margin-right: 70px;
+}
+.amazonTitle { font-size: 23px; font-weight: 700; margin-bottom: 20px;}
+.brandTag { font-size: 14px; color: #777; font-weight: 500; margin-left: 8px; }
+.amazonRatings { font-size: 16px; margin: 20px 0; color: #ffa41c; display:flex; align-items:center; }
 .starIcon { color: #ffa41c; font-size:18px; margin-right:2px; }
 .starIcon.outline { color: #ccc; }
-.amazonDesc { font-size: 15px; color: #444; margin: 10px 0; }
+.amazonDesc { font-size: 15px; color: #444; margin: 18px 0px;margin-right: 50px;  }
 .amazonBullets { padding-left: 20px; margin: 15px 0; }
 .amazonBullets li { margin-bottom: 6px; font-size: 15px; color: #333; }
 .amazonPriceBox { display:flex; align-items:center; gap:12px; margin:12px 0; }
 .amazonPrice { font-size:28px; color:#b12704; font-weight:700; }
 .amazonOldPrice { text-decoration: line-through; color:#777; }
-.amazonStock.inS { color:#067d62; font-weight:bold; }
+.qtyInline { margin: 22px 0 14px; }
+.amazonStock.inS { color:#067d62; font-weight:bold; margin: 30px 0px;}
 .amazonStock.outS { color:#d32f2f; font-weight:bold; }
 
 /* RIGHT – BUY BOX */
 .amazonRightBox {
+  margin-top: 56px !important;
   width: 250px;
   border: 1px solid #ddd;
   padding: 18px;

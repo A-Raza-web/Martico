@@ -1,14 +1,29 @@
 import SideBar from "../../components/List_SideBar";
 import ContentRight from "../../components/List-content_right"
+import { useParams } from "react-router-dom";
+import { useState } from "react";
  
 const Listing = () => {
+  const { id } = useParams();
+  const categoryId = id === 'all' ? null : id;
+  const [priceFilter, setPriceFilter] = useState(null);
+  const [brandFilter, setBrandFilter] = useState(null);
+
+  const handlePriceFilter = (maxPrice) => {
+    setPriceFilter(maxPrice);
+  };
+
+  const handleBrandFilter = (brands) => {
+    setBrandFilter(brands);
+  };
+
   return(
     <>
       <section className="product_listing_page">
         <div className="container">
           <div className="productListing d-flex">
-              <SideBar/>
-              <ContentRight/>
+              <SideBar onPriceFilter={handlePriceFilter} onBrandFilter={handleBrandFilter}/>
+              <ContentRight categoryId={categoryId} priceFilter={priceFilter} brandFilter={brandFilter}/>
           </div>
         </div>
       </section>  

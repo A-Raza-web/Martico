@@ -1,10 +1,14 @@
 import { useState, useCallback } from 'react';
 import { AiOutlineEye, AiOutlineEyeInvisible } from 'react-icons/ai';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import axios from "axios";
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/material/Alert';
 import logo from '../../assets/images/logo11.png';
 import './AuthForm.css';
 
 const AuthForm = () => {
+  const navigate = useNavigate();
   const [mode, setMode] = useState('signin'); // 'signin' or 'signup'
   const [formData, setFormData] = useState({
     email: '',
@@ -14,17 +18,14 @@ const AuthForm = () => {
   });
   const [error, setError] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
   const toggleShowPassword = () => setShowPassword(prev => !prev);
 
   const switchMode = useCallback((newMode) => {
-    // Prevent switching to same mode
     if (mode === newMode) return;
 
-    // Clear any existing errors immediately
     setError(null);
-
-    // Reset form state
     setFormData({
       email: '',
       password: '',
@@ -32,56 +33,59 @@ const AuthForm = () => {
       remember: false
     });
     setShowPassword(false);
-
-    // Switch mode and let CSS handle animations
     setMode(newMode);
   }, [mode]);
 
   const handleInputChange = (field) => (e) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: e.target.value
-    }));
+    setFormData(prev => ({ ...prev, [field]: e.target.value }));
   };
 
   const handleCheckboxChange = (field) => (e) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: e.target.checked
-    }));
+    setFormData(prev => ({ ...prev, [field]: e.target.checked }));
   };
 
-  const handleSubmit = useCallback((e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    const { email, password, name } = formData;
 
-    if (mode === 'signin') {
-      if (!formData.email || !formData.password) {
-        setError('Please enter both email and password.');
-        return;
-      }
+    try {
+      if (mode === "signin") {
+        const res = await axios.post("http://localhost:4000/api/auth/signin", {
+          email,
+          password,
+        });
+
+        console.log("Login Success:", res.data);
+        localStorage.setItem("token", res.data.token);
+        localStorage.setItem("userId", res.data._id);  
+        localStorage.setItem("user", JSON.stringify({
+            name: res.data.name,
+            email: res.data.email,
+            phone: res.data.phone
+        }));
+        navigate('/');
+       }else {
+        const res = await axios.post("http://localhost:4000/api/auth/signup", {
+          name,
+          email,
+          password,
+        });
+        console.log("Signup Success:", res.data);
+        localStorage.setItem("token", res.data.token);
+        localStorage.setItem("user", JSON.stringify({ name: res.data.name, email: res.data.email }));
+        
+        localStorage.setItem("userId", res.data.user._id);
+        setSnackbar({ open: true, message: 'Account created successfully!', severity: 'success' });
+        setTimeout(() => navigate('/'), 1500);
+     }
       setError(null);
-      console.log('SignIn:', {
-        email: formData.email,
-        password: formData.password,
-        remember: formData.remember
-      });
-    } else {
-      if (!formData.name || !formData.email || !formData.password) {
-        setError('Please fill all required fields.');
-        return;
-      }
-      setError(null);
-      console.log('SignUp:', {
-        name: formData.name,
-        email: formData.email,
-        password: formData.password
-      });
+    } catch (err) {
+      setError(err?.response?.data?.message || err.message || "Something went wrong");
     }
-  }, [mode, formData]);
+  };
 
   return (
     <section className="auth-page">
-      {/* Decorative background sheets */}
       <div className="bg-sheet bg-sheet-1"></div>
       <div className="bg-sheet bg-sheet-2"></div>
 
@@ -95,20 +99,34 @@ const AuthForm = () => {
               </Link>
             </div>
 
-            {/* Title - Shows current mode */}
+            {/* Header */}
             <div className="auth-header">
               <h2>{mode === 'signin' ? 'Welcome Back' : 'Create Account'}</h2>
-              <p>{mode === 'signin'
-                ? 'Sign in to access your account'
-                : 'Join us to get started'}
-              </p>
+              <p>{mode === 'signin' ? 'Sign in to access your account' : 'Join us to get started'}</p>
             </div>
 
             {error && <div className="auth-error">{error}</div>}
 
+            {/* Success Snackbar */}
+            <Snackbar
+              open={snackbar.open}
+              autoHideDuration={4000}
+              onClose={() => setSnackbar({ ...snackbar, open: false })}
+              anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+            >
+              <Alert
+                onClose={() => setSnackbar({ ...snackbar, open: false })}
+                severity={snackbar.severity}
+                variant="filled"
+                sx={{ width: '100%', fontSize: '1rem', fontWeight: 500 }}
+              >
+                {snackbar.message}
+              </Alert>
+            </Snackbar>
+
             {/* Dynamic Fields */}
             <div className="auth-fields">
-              {/* First Field - Changes based on mode */}
+              {/* First field */}
               <div className="field-group">
                 <label>
                   {mode === 'signin' ? 'Email Address' : 'Full Name'}
@@ -116,20 +134,14 @@ const AuthForm = () => {
                     key={`${mode}-field1`}
                     type={mode === 'signin' ? 'email' : 'text'}
                     value={mode === 'signin' ? formData.email : formData.name}
-                    onChange={mode === 'signin'
-                      ? handleInputChange('email')
-                      : handleInputChange('name')
-                    }
-                    placeholder={mode === 'signin'
-                      ? 'Enter your email'
-                      : 'Enter your full name'
-                    }
+                    onChange={mode === 'signin' ? handleInputChange('email') : handleInputChange('name')}
+                    placeholder={mode === 'signin' ? 'Enter your email' : 'Enter your full name'}
                     required
                   />
                 </label>
               </div>
 
-              {/* Email Field - Only for Signup */}
+              {/* Email for Signup */}
               {mode === 'signup' && (
                 <div className="field-group">
                   <label>
@@ -145,7 +157,7 @@ const AuthForm = () => {
                 </div>
               )}
 
-              {/* Password Field - Always shown */}
+              {/* Password */}
               <div className="field-group">
                 <label>
                   Password
@@ -169,7 +181,7 @@ const AuthForm = () => {
                 </label>
               </div>
 
-              {/* Remember Me - Only for Sign In */}
+              {/* Remember Me */}
               {mode === 'signin' && (
                 <div className="auth-options">
                   <label className="checkbox-label">
@@ -189,18 +201,11 @@ const AuthForm = () => {
               {mode === 'signin' ? 'Sign In' : 'Create Account'}
             </button>
 
-            {/* Social Login Options */}
+            {/* Social Login */}
             <div className="social-login">
-              <div className="divider">
-                <span>or continue with</span>
-              </div>
-
+              <div className="divider"><span>or continue with</span></div>
               <div className="social-buttons horizontal">
-                <button
-                  type="button"
-                  className="social-btn google"
-                  onClick={() => console.log('Google Sign In clicked')}
-                >
+                <button type="button" className="social-btn google" onClick={() => console.log('Google Sign In clicked')}>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
                     <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
@@ -212,16 +217,11 @@ const AuthForm = () => {
               </div>
             </div>
 
+            {/* Footer */}
             <div className="auth-footer">
               <p>
-                {mode === 'signin'
-                  ? "Don't have an account? "
-                  : "Already have an account? "}
-                <button
-                  type="button"
-                  className="mode-toggle-link"
-                  onClick={() => switchMode(mode === 'signin' ? 'signup' : 'signin')}
-                >
+                {mode === 'signin' ? "Don't have an account? " : "Already have an account? "}
+                <button type="button" className="mode-toggle-link" onClick={() => switchMode(mode === 'signin' ? 'signup' : 'signin')}>
                   {mode === 'signin' ? 'Sign Up' : 'Sign In'}
                 </button>
               </p>

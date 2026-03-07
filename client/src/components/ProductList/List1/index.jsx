@@ -1,9 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Button from '@mui/material/Button';
+import Tabs, { tabsClasses } from '@mui/material/Tabs';
+import Tab from '@mui/material/Tab';
+import Box from '@mui/material/Box';
 import List2 from '../List2/index'
+import { useNavigate } from 'react-router-dom';
 import img1 from "../../../assets/images/banner1.jpg";
 import pro from '../../../assets/images/pro.jpg';
-import { IoArrowForward } from "react-icons/io5";
+
 import { Swiper, SwiperSlide } from 'swiper/react';
 import 'swiper/css';
 import 'swiper/css/navigation';
@@ -22,6 +26,8 @@ const List1 = () => {
   // -------------------------------
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [openModal, setOpenModal] = useState(false);
+  const [tabValue, setTabValue] = useState(0);
+  const navigate = useNavigate();
 
   const handleOpenModal = (product) => {
     setSelectedProduct(product);
@@ -34,58 +40,53 @@ const List1 = () => {
   };
 
 
-  const products = [
-    {
-      id: 1,
-      name: "Leather Handbag",
-      desc: "Stylish red PU handbag for women",
-      img: "https://api.spicezgold.com/download/file_1734527074321_ksc-khatushyam-collection-red-pu-for-women-handheld-bag-product-images-rvvxdnkjfy-0-202405290001.webp",
-      oldPrice: 79.99,
-      newPrice: 49.99,
-      rating: 4.5,
-      inStock: true,
-    },
-    {
-      id: 2,
-      name: "Smart Watch",
-      desc: "Waterproof Bluetooth wrist watch",
-      img: pro,
-      oldPrice: 99.99,
-      newPrice: 69.99,
-      rating: 4.0,
-      inStock: false,
-    },
-    {
-      id: 3,
-      name: "Trendy Shoes",
-      desc: "Comfortable sneakers for men",
-      img: pro,
-      oldPrice: 89.99,
-      newPrice: 59.99,
-      rating: 3.5,
-      inStock: true,
-    },
-    {
-      id: 4,
-      name: "Classic Sunglasses",
-      desc: "UV-protected stylish eyewear",
-      img: pro,
-      oldPrice: 59.99,
-      newPrice: 39.99,
-      rating: 5,
-      inStock: true,
-    },
-    {
-      id: 5,
-      name: "Designer Wallet",
-      desc: "Premium leather men’s wallet",
-      img: pro,
-      oldPrice: 49.99,
-      newPrice: 29.99,
-      rating: 4.2,
-      inStock: false,
-    },
-  ];
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+
+  const fetchProducts = async (categoryId = null) => {
+    try {
+      setLoading(true);
+      let url = 'http://localhost:4000/api/products?limit=12';
+      
+      if (categoryId) {
+        url += `&category=${categoryId}`;
+      } else {
+        url += '&inFeatured=true';
+      }
+      
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      const list = json.data || json;
+      setProducts(list);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching products:', err);
+      setError('Failed to load products');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProducts(selectedCategory);
+    
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch('http://localhost:4000/api/categories');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        const list = json.data || json;
+        setCategories(list);
+      } catch (err) {
+        console.error('Error fetching categories:', err);
+      }
+    };
+    fetchCategories();
+  }, [selectedCategory]);
 
   const renderStars = (rating) => {
     const stars = [];
@@ -105,6 +106,52 @@ const List1 = () => {
     return Math.round(discount);
   };
 
+  const handleTabChange = (_event, newValue) => {
+    setTabValue(newValue);
+    
+    if (newValue === 0) {
+      setSelectedCategory(null);
+    } else {
+      const categoryIndex = newValue - 1;
+      if (categories[categoryIndex]) {
+        const id = categories[categoryIndex]._id;
+        setSelectedCategory(id);
+      }
+    }
+  };
+
+  // Navigate to product detail page
+  const handleProductClick = (productId) => {
+    navigate(`/product/${productId}`);
+  };
+
+  // Keep the active tab in sync with the selected category when categories load/update
+  useEffect(() => {
+    if (!selectedCategory) {
+      if (tabValue !== 0) setTabValue(0);
+      return;
+    }
+    const idx = categories.findIndex(c => c._id === selectedCategory);
+    const desired = idx >= 0 ? idx + 1 : 0;
+    if (desired !== tabValue) setTabValue(desired);
+  }, [categories, selectedCategory]);
+
+  // Truncate description to 8 words
+  const truncateWords = (text, wordLimit = 8) => {
+    if (!text) return '';
+    const words = text.split(/\s+/);
+    if (words.length <= wordLimit) return text;
+    return words.slice(0, wordLimit).join(' ') + '...';
+  };
+
+  // Truncate product name to 3 words
+  const truncateName = (text) => {
+    if (!text) return '';
+    const words = text.split(/\s+/);
+    if (words.length <= 3) return text;
+    return words.slice(0, 3).join(' ') + '...';
+  };
+
   return (
     <section className="homeProducts py-5">
       <div className="container">
@@ -119,21 +166,43 @@ const List1 = () => {
 
           {/* Product list */}
           <div className="col-md-9 ProductsRow">
-            <div className="d-flex align-items-center mb-3">
+            <div className="d-flex align-items-center mb-3 productsHeader">
               <div className="info w-75 ml-4">
-                <h3 className="mb-0 hd">BEST SELLERS</h3>
+                <h3 className="mb-0 hd">FEATURED PRODUCTS</h3>
                 <p className="text-color text-sml mb-0">
                   Do not miss the current offers until the end of March.
                 </p>
               </div>
-              <Button
-                className='viewAllBtn ml-auto'
-                variant="contained"
-                color="primary"
-                endIcon={<IoArrowForward />}
-              >
-                View All
-              </Button>
+                  <Box className="featuredTabs" sx={{ ml: 'auto', maxWidth: { xs: 320,  sm: 520 } }}>
+                  {categories.length > 0 ? (
+      categories.map((cat) => (
+        <Tab 
+          key={cat._id} 
+          label={cat.name} 
+          sx={{
+            fontWeight: 600,
+            fontSize: '14px',
+            textTransform: 'none',
+            color: '#006970',
+            '&.Mui-selected': {
+              color: '#006970',
+              fontWeight: 700
+            }
+          }}
+        />
+      ))
+                        ) : (
+                      [
+                        <Tab key="1" label="Item One" sx={{ color: '#006970' }} />,
+                        <Tab key="2" label="Item Two" sx={{ color: '#006970' }} />,
+                        <Tab key="3" label="Item Three" sx={{ color: '#006970' }} />,
+                        <Tab key="4" label="Item Four" sx={{ color: '#006970' }} />,
+                        <Tab key="5" label="Item Five" sx={{ color: '#006970' }} />,
+                        <Tab key="6" label="Item Six" sx={{ color: '#006970' }} />,
+                        <Tab key="7" label="Item Seven" sx={{ color: '#006970' }} />
+                      ]
+                    )}
+              </Box>
             </div>
 
             <div className="product_row w-100 mt-2 ml-4">
@@ -156,52 +225,73 @@ const List1 = () => {
                   swiper.navigation.update();
                 }}
               >
-                {products.map((item) => (
-                  <SwiperSlide key={item.id}>
-                    <div className='card productCard shadow-sm border-0 rounded-lg'>
-                      <div className='imgWrapper overflow-hidden position-relative'>
-                        <img src={item.img} alt={item.name} className="img-fluid w-100" />
+                {loading ? (
+                  <div className="p-4">Loading products...</div>
+                ) : error ? (
+                  <div className="p-4 text-danger">{error}</div>
+                ) : products.length === 0 ? (
+                  <div className="p-4">No products available</div>
+                ) : (
+                  products.map((item) => {
+                    const oldPrice = item.oldPrice ?? ((item.price ?? 0) * 1.2);
+                    const newPrice = item.newPrice ?? (item.price ?? 0);
+                    const imgSrc = item.images && item.images.length ? item.images[0].url : (item.img || pro);
+                    const desc = truncateWords(item.description || item.desc || '');
+                    const name = truncateName(item.name || '');
+                    const inStock = (item.countInStock ?? item.inStock ?? 0) > 0;
+                    const rating = item.rating ?? 0;
+                    return (
+                      <SwiperSlide key={item._id || item.id}>
+                        <div 
+                          className='card productCard shadow-sm border-0 rounded-lg' 
+                          onClick={() => handleProductClick(item._id || item.id)}
+                          style={{ cursor: 'pointer' }}
+                        >
+                          <div className='imgWrapper overflow-hidden position-relative'>
+                            <img src={imgSrc} alt={item.name} className="img-fluid w-100" />
 
-                        {/* Discount */}
-                        <span className="discountBadge">
-                          {getDiscountPercent(item.oldPrice, item.newPrice)} % OFF
-                        </span>
+                            {/* Discount */}
+                            <span className="discountBadge">
+                              {getDiscountPercent(oldPrice, newPrice)} % OFF
+                            </span>
 
-                        {/* Icons */}
-                        <div className="imageIcons">
+                            {/* Icons */}
+                            <div className="imageIcons">
 
-                          {/*  FULL SCREEN ICON CLICK → OPEN MODAL */}
-                          <span className="iconBox" onClick={() => handleOpenModal(item)}>
-                            <RxExitFullScreen />
-                          </span>
+                              {/*  FULL SCREEN ICON CLICK → OPEN MODAL */}
+                              <span className="iconBox" onClick={(e) => { e.stopPropagation(); handleOpenModal(item); }}>
+                                <RxExitFullScreen />
+                              </span>
 
-                          <span className="iconBox">
-                            <IoMdHeartEmpty />
-                          </span>
+                              <span className="iconBox">
+                                <IoMdHeartEmpty />
+                              </span>
 
+                            </div>
+                          </div>
+
+                          <div className='card-body text-start px-3'>
+                            <h6 className='card-title mb-1 fw-bold'>{name}</h6>
+                            <p className='text-muted small mb-1'>{desc}</p>
+
+                            <div className={`stockStatus ${inStock ? 'inStock' : 'outStock'}`}>
+                              {inStock ? "In Stock" : "Out of Stock"}
+                            </div>
+
+                            <div className='rating mb-2'>
+                              {renderStars(rating)}
+                            </div>
+
+                            <div className='priceBox mt-1'>
+                              <span className='oldPrice me-2'>${oldPrice.toFixed(2)}</span>
+                              <span className='newPrice ml-3'>${newPrice.toFixed(2)}</span>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-
-                      <div className='card-body text-start px-3'>
-                        <h6 className='card-title mb-1 fw-bold'>{item.name}</h6>
-                        <p className='text-muted small mb-1'>{item.desc}</p>
-
-                        <div className={`stockStatus ${item.inStock ? 'inStock' : 'outStock'}`}>
-                          {item.inStock ? "In Stock" : "Out of Stock"}
-                        </div>
-
-                        <div className='rating mb-2'>
-                          {renderStars(item.rating)}
-                        </div>
-
-                        <div className='priceBox mt-1'>
-                          <span className='oldPrice me-2'>${item.oldPrice.toFixed(2)}</span>
-                          <span className='newPrice ml-3'>${item.newPrice.toFixed(2)}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </SwiperSlide>
-                ))}
+                      </SwiperSlide>
+                    );
+                  })
+                )}
               </Swiper>
             </div>
           </div>

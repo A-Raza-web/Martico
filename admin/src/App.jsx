@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Routes, Route, useLocation, Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Routes, Route, useLocation, Link, Navigate } from 'react-router-dom'
 import Button from '@mui/material/Button'
 import SideNavbar from './component/SideNavbar'
 import Dashboard from './pages/Dashboard'
@@ -50,9 +50,40 @@ function Topbar({ title }) {
   )
 }
 
+// Protected Route Component
+function ProtectedRoute({ children }) {
+  const [isAuthenticated, setIsAuthenticated] = useState(null);
+  
+  useEffect(() => {
+    // Check for token in localStorage or sessionStorage
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    setIsAuthenticated(!!token);
+  }, []);
+
+  if (isAuthenticated === null) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh' 
+      }}>
+        Loading...
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+}
+
 function App() {
   const location = useLocation()
   const isAuthPage = location.pathname === '/login' || location.pathname === '/signup'
+  const [sidebarOpen, setSidebarOpen] = useState(true)
 
   const getPageTitle = (pathname) => {
     switch (pathname) {
@@ -94,36 +125,38 @@ function App() {
           <Route path="/signup" element={<Signup />} />
         </Routes>
       ) : (
-        <div className="dashboard">
-          <SideNavbar />
-          <div className="main">
-            <Topbar title={title} />
-            <main className="content">
-              <Routes>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/categories/*" element={<CategoryManagement />} />
-                <Route path="/sub-categories/*" element={<SubCategoryManagement />} />
-                <Route path="/products/list" element={<ProductList />} />
+        <ProtectedRoute>
+          <div className={`dashboard ${sidebarOpen ? '' : 'sidebar-hidden'}`}>
+            <SideNavbar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+            <div className="main">
+              <Topbar title={title} />
+              <main className="content">
+                <Routes>
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/categories/*" element={<CategoryManagement />} />
+                  <Route path="/sub-categories/*" element={<SubCategoryManagement />} />
+                  <Route path="/products/list" element={<ProductList />} />
 
-                <Route path="/products/new" element={<ProductForm />} />
-                <Route path="/products/:id" element={<ProductForm />} />
-                <Route path="/products/view/:id" element={<ProductPage />} />
-                <Route path="/orders" element={<Orders />} />
-                <Route path="/orders/:id" element={<OrderDetails />} />
-                <Route path="/customers" element={<Customers />} />
-                <Route path="/reports" element={<Reports />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/marketing" element={<Marketing />} />
-                <Route path="/banners/*" element={<Banners />} />
-                <Route path="/side-banners/*" element={<SideBanners />} />
-                <Route path="/bottom-banners/*" element={<BottomBanners />} />
-                <Route path="/sliders/*" element={<Sliders />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/user-settings" element={<UserSettings />} />
-              </Routes>
-            </main>
+                  <Route path="/products/new" element={<ProductForm />} />
+                  <Route path="/products/:id" element={<ProductForm />} />
+                  <Route path="/products/view/:id" element={<ProductPage />} />
+                  <Route path="/orders" element={<Orders />} />
+                  <Route path="/orders/:id" element={<OrderDetails />} />
+                  <Route path="/customers" element={<Customers />} />
+                  <Route path="/reports" element={<Reports />} />
+                  <Route path="/settings" element={<Settings />} />
+                  <Route path="/marketing" element={<Marketing />} />
+                  <Route path="/banners/*" element={<Banners />} />
+                  <Route path="/side-banners/*" element={<SideBanners />} />
+                  <Route path="/bottom-banners/*" element={<BottomBanners />} />
+                  <Route path="/sliders/*" element={<Sliders />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/user-settings" element={<UserSettings />} />
+                </Routes>
+              </main>
+            </div>
           </div>
-        </div>
+        </ProtectedRoute>
       )}
     </ThemeProvider>
   )

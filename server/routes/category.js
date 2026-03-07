@@ -30,6 +30,7 @@ router.get('/:id', async (req, res) => {
 });
 
 
+
 // POST /api/categories/create
 router.post('/create', async (req, res) => {
   try {

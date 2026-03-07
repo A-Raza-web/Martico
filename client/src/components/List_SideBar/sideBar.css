@@ -16,10 +16,54 @@
     text-transform: capitalize;
 }
 .sideBar .filterBox .scroll{
-    padding-left: 10px;
-    max-height: 180px;
+    padding-left: 0px;
+    max-height: 280px;
     overflow-y: scroll;
     overflow-x: hidden;
+}
+.catItem{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  margin-bottom: 6px;
+  border-radius: 12px;
+  color: #0f172a;
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition: all .2s ease;
+}
+.catItem:hover{
+  color:#0f172a !important;
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+.catItem.active{
+  background: rgba(15,118,110,.08);
+  border-color: rgba(15,118,110,.25);
+}
+.catAvatar{
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #e2e8f0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #475569;
+  font-weight: 700;
+  font-size: 12px;
+}
+.catAvatar img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.catName{
+  font-size: 14px;
+  font-weight: 600;
 }
 .sideBar .filterBox .scroll::-webkit-scrollbar{
     height: 5px;
@@ -126,4 +170,68 @@
 }
 .sideBarBanner{
   margin-bottom: 55px !important;
+}
+
+/* Brand Filter Styles */
+.brandList {
+  padding-left: 0;
+  margin: 0;
+}
+
+.brandList li {
+  list-style: none;
+  margin-bottom: 4px;
+}
+
+.brandItem {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  font-weight: 500;
+  color: #0f172a;
+  text-align: left;
+}
+
+.brandItem:hover {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  color: #0f172a;
+}
+
+.brandItem.selected {
+  background: rgba(15, 118, 110, 0.08);
+  border-color: rgba(15, 118, 110, 0.25);
+  color: #0f736c;
+  font-weight: 600;
+}
+
+.brandItem.selected:hover {
+  background: rgba(15, 118, 110, 0.12);
+  border-color: rgba(15, 118, 110, 0.35);
+}
+
+.brandName {
+  flex: 1;
+}
+
+.brandCheck {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #2DE1C2;
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  margin-left: 8px;
 }

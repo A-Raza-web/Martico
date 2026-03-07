@@ -13,11 +13,15 @@ app.use(bodyParser.urlencoded({ extended: true }));
 const categoryRoutes = require('./routes/category');
 const productRoutes = require('./routes/product');
 const subCategoryRoutes = require('./routes/subCat');
+const authRouter =  require("./routes/authRoutes");
+const cartRoutes = require('./routes/cartRoutes');
 
 // Use routes
 app.use('/api/categories', categoryRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/subcategories', subCategoryRoutes);
+app.use("/api/auth", authRouter);
+app.use("/api/cart", cartRoutes);
 
 const PORT = process.env.PORT ;
 

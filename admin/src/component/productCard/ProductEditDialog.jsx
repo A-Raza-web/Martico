@@ -23,11 +23,13 @@ function ProductEditDialog({ open, onClose, product, onUpdate }) {
     brand: '',
     category: '',
     price: '',
+    oldPrice: '',
+    discount: '',
     countInStock: '',
     subCategory: '',
     rating: '',
     inFeatured: false,
-    image: []
+    images: []
   });
   const [imageFiles, setImageFiles] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
@@ -75,16 +77,18 @@ function ProductEditDialog({ open, onClose, product, onUpdate }) {
         brand: product.brand || '',
         category: product.category?._id || product.category || '',
         price: product.price || '',
+        oldPrice: product.oldPrice || '',
+        discount: product.discount || '',
         countInStock: product.countInStock || '',
         subCategory: product.subCategory?._id || product.subCategory || '',
         rating: product.rating || '',
         inFeatured: product.inFeatured || false,
-        image: product.image || []
+        images: product.images || []
       });
       
       // Handle images
-      if (product.image) {
-        const imgs = Array.isArray(product.image) ? product.image : [product.image];
+      if (product.images && product.images.length > 0) {
+        const imgs = product.images.map(img => img.url);
         setImagePreviews(imgs);
       } else {
         setImagePreviews([]);
@@ -96,10 +100,44 @@ function ProductEditDialog({ open, onClose, product, onUpdate }) {
 
   const handleInputChange = (e) => {
     const { name, value, checked, type } = e.target;
-    setEditFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
+
+    // Handle auto-calculation for price, oldPrice, and discount
+    if (name === 'price' || name === 'oldPrice' || name === 'discount') {
+      const newFormData = { ...editFormData, [name]: value };
+      const price = parseFloat(newFormData.price) || 0;
+      const oldPrice = parseFloat(newFormData.oldPrice) || 0;
+      const discount = parseFloat(newFormData.discount) || 0;
+
+      // If user enters price and oldPrice, calculate discount
+      if (name === 'price' || name === 'oldPrice') {
+        if (price > 0 && oldPrice > 0 && price < oldPrice) {
+          const calculatedDiscount = Math.round(((oldPrice - price) / oldPrice) * 100);
+          newFormData.discount = calculatedDiscount;
+        }
+      }
+      // If user enters price and discount, calculate oldPrice
+      if (name === 'price' || name === 'discount') {
+        if (price > 0 && discount > 0 && discount < 100) {
+          const calculatedOldPrice = (price / (1 - discount / 100)).toFixed(2);
+          newFormData.oldPrice = parseFloat(calculatedOldPrice);
+        }
+      }
+      // If user enters oldPrice and discount, calculate price
+      if (name === 'oldPrice' || name === 'discount') {
+        if (oldPrice > 0 && discount > 0 && discount < 100) {
+          const calculatedPrice = (oldPrice * (1 - discount / 100)).toFixed(2);
+          newFormData.price = parseFloat(calculatedPrice);
+        }
+      }
+
+      setEditFormData(newFormData);
+    } else {
+      setEditFormData(prev => ({
+        ...prev,
+        [name]: type === 'checkbox' ? checked : value
+      }));
+    }
+    
     // Clear error for this field
     if (errors[name]) {
       setErrors(prev => {
@@ -301,7 +339,7 @@ function ProductEditDialog({ open, onClose, product, onUpdate }) {
             </TextField>
           </Stack>
 
-          {/* Price and Count In Stock Row */}
+          {/* Price, Old Price and Discount Row */}
           <Stack direction="row" spacing={2}>
             <TextField
               fullWidth
@@ -320,6 +358,35 @@ function ProductEditDialog({ open, onClose, product, onUpdate }) {
                 startAdornment: <InputAdornment position="start">€</InputAdornment>,
               }}
             />
+            <TextField
+              fullWidth
+              label="Old Price"
+              name="oldPrice"
+              type="number"
+              value={editFormData.oldPrice}
+              onChange={handleInputChange}
+              variant="outlined"
+              size="small"
+              inputProps={{ step: '0.01' }}
+              InputProps={{
+                startAdornment: <InputAdornment position="start">€</InputAdornment>,
+              }}
+            />
+            <TextField
+              fullWidth
+              label="Discount (%)"
+              name="discount"
+              type="number"
+              value={editFormData.discount}
+              onChange={handleInputChange}
+              variant="outlined"
+              size="small"
+              inputProps={{ min: 0, max: 100 }}
+            />
+          </Stack>
+
+          {/* Count In Stock Row */}
+          <Stack direction="row" spacing={2}>
             <TextField
               fullWidth
               label="Count In Stock"
@@ -375,7 +442,7 @@ function ProductEditDialog({ open, onClose, product, onUpdate }) {
               />
             }
             label="Featured Product"
-            sx={{ ml: 0 }}
+            sx={{ ml: 0, cursor: 'pointer' }}
           />
 
           {/* Product Images */}

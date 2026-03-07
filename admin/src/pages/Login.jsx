@@ -1,14 +1,88 @@
-import { Link } from 'react-router-dom'
-import Button from '@mui/material/Button'
-import TextField from '@mui/material/TextField'
-import Checkbox from '@mui/material/Checkbox'
-import FormControlLabel from '@mui/material/FormControlLabel'
-import Box from '@mui/material/Box'
-import Typography from '@mui/material/Typography'
-import logo from '../assets/logo.png'
-import './Auth.css'
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
+import Checkbox from '@mui/material/Checkbox';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import logo from '../assets/logo.png';
+import './Auth.css';
 
 const Login = () => {
+    const navigate = useNavigate();
+    const [formData, setFormData] = useState({
+        email: '',
+        password: ''
+    });
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [rememberMe, setRememberMe] = useState(true);
+
+    const handleChange = (e) => {
+        setFormData({
+            ...formData,
+            [e.target.name]: e.target.value
+        });
+        setError('');
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        
+        // Validation
+        if (!formData.email || !formData.password) {
+            setError('Please enter email and password');
+            return;
+        }
+
+        setLoading(true);
+        setError('');
+
+        try {
+            const response = await fetch('http://localhost:4000/api/auth/signin', {
+                method: 'post',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    email: formData.email,
+                    password: formData.password
+                })
+            });
+
+            const data = await response.json();
+
+            if (data._id) {
+                // Store token and user info
+                const userData = {
+                    _id: data._id,
+                    name: data.name,
+                    email: data.email,
+                    phone: data.phone
+                }
+                console.log('Login: Storing user data:', userData)
+                
+                if (rememberMe) {
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(userData));
+                } else {
+                    sessionStorage.setItem('token', data.token);
+                    sessionStorage.setItem('user', JSON.stringify(userData));
+                }
+                // Redirect to dashboard
+                navigate('/');
+            } else {
+                setError(data.message || 'Invalid email or password');
+            }
+        } catch (err) {
+            setError('Network error. Please try again.');
+            console.error('Login error:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="auth-page">
             <div className="auth-wrapper">
@@ -19,25 +93,52 @@ const Login = () => {
                         <p className="auth-subtitle">Please enter your details to sign in</p>
                     </div>
 
-                    <form className="auth-form" onSubmit={(e) => e.preventDefault()}>
+                    {error && (
+                        <div className="alert alert-danger" style={{ 
+                            padding: '10px', 
+                            marginBottom: '15px', 
+                            borderRadius: '8px',
+                            backgroundColor: '#fee2e2',
+                            color: '#dc2626',
+                            fontSize: '14px'
+                        }}>
+                            {error}
+                        </div>
+                    )}
+
+                    <form className="auth-form" onSubmit={handleSubmit}>
                         <TextField
                             label="Email Address"
+                            name="email"
                             type="email"
                             variant="outlined"
                             fullWidth
                             size="small"
+                            value={formData.email}
+                            onChange={handleChange}
+                            disabled={loading}
                         />
                         <TextField
                             label="Password"
+                            name="password"
                             type="password"
                             variant="outlined"
                             fullWidth
                             size="small"
+                            value={formData.password}
+                            onChange={handleChange}
+                            disabled={loading}
                         />
 
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <FormControlLabel
-                                control={<Checkbox size="small" defaultChecked />}
+                                control={
+                                    <Checkbox 
+                                        size="small" 
+                                        checked={rememberMe}
+                                        onChange={(e) => setRememberMe(e.target.checked)}
+                                    />
+                                }
                                 label={<Typography variant="body2">Remember me</Typography>}
                             />
                             <Link to="#" className="auth-link" style={{ fontSize: '13px' }}>
@@ -51,9 +152,10 @@ const Login = () => {
                             size="large"
                             fullWidth
                             type="submit"
+                            disabled={loading}
                             sx={{ borderRadius: '12px', py: 1.5 }}
                         >
-                            Sign in
+                            {loading ? 'Signing in...' : 'Sign in'}
                         </Button>
 
                         <div className="auth-divider">or</div>
@@ -62,6 +164,7 @@ const Login = () => {
                             variant="outlined"
                             fullWidth
                             className="google-btn"
+                            disabled={loading}
                             startIcon={
                                 <svg className="google-icon" viewBox="0 0 24 24">
                                     <path
@@ -96,4 +199,4 @@ const Login = () => {
     )
 }
 
-export default Login
+export default Login;

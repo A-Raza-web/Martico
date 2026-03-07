@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Button from '@mui/material/Button';
+import { useNavigate } from 'react-router-dom';
 import img from "../../../assets/images/banner2.jpg";
 import pro from '../../../assets/images/pro.jpg';
 import { IoArrowForward } from "react-icons/io5";
@@ -16,6 +17,7 @@ const List2 = () => {
 
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [openModal, setOpenModal] = useState(false);
+  const navigate = useNavigate();
   
     const handleOpenModal = (product) => {
       setSelectedProduct(product);
@@ -27,98 +29,40 @@ const List2 = () => {
       setSelectedProduct(null);
     };
 
-  const products = [
-    {
-      id: 1,
-      name: "Leather Handbag",
-      desc: "Stylish red PU handbag for women",
-      img: "https://api.spicezgold.com/download/file_1734527074321_ksc-khatushyam-collection-red-pu-for-women-handheld-bag-product-images-rvvxdnkjfy-0-202405290001.webp",
-      oldPrice: 79.99,
-      newPrice: 49.99,
-      rating: 4.5,
-      inStock: true,
-    },
-    {
-      id: 2,
-      name: "Smart Watch",
-      desc: "Waterproof Bluetooth wrist watch",
-      img: pro,
-      oldPrice: 99.99,
-      newPrice: 69.99,
-      rating: 4.0,
-      inStock: false,
-    },
-    {
-      id: 3,
-      name: "Trendy Shoes",
-      desc: "Comfortable sneakers for men",
-      img: pro,
-      oldPrice: 89.99,
-      newPrice: 59.99,
-      rating: 3.5,
-      inStock: true,
-    },
-    {
-      id: 4,
-      name: "Classic Sunglasses",
-      desc: "UV-protected stylish eyewear",
-      img: pro,
-      oldPrice: 59.99,
-      newPrice: 39.99,
-      rating: 5,
-      inStock: true,
-    },
-    {
-      id: 5,
-      name: "Designer Wallet",
-      desc: "Premium leather men’s wallet",
-      img: pro,
-      oldPrice: 49.99,
-      newPrice: 29.99,
-      rating: 4.2,
-      inStock: false,
-    },
-    {
-      id: 1,
-      name: "Leather Handbag",
-      desc: "Stylish red PU handbag for women",
-      img: "https://api.spicezgold.com/download/file_1734527074321_ksc-khatushyam-collection-red-pu-for-women-handheld-bag-product-images-rvvxdnkjfy-0-202405290001.webp",
-      oldPrice: 79.99,
-      newPrice: 49.99,
-      rating: 4.5,
-      inStock: true,
-    },
-    {
-      id: 1,
-      name: "Leather Handbag",
-      desc: "Stylish red PU handbag for women",
-      img: "https://api.spicezgold.com/download/file_1734527074321_ksc-khatushyam-collection-red-pu-for-women-handheld-bag-product-images-rvvxdnkjfy-0-202405290001.webp",
-      oldPrice: 79.99,
-      newPrice: 49.99,
-      rating: 4.5,
-      inStock: true,
-    },
-    {
-      id: 1,
-      name: "Leather Handbag",
-      desc: "Stylish red PU handbag for women",
-      img: "https://api.spicezgold.com/download/file_1734527074321_ksc-khatushyam-collection-red-pu-for-women-handheld-bag-product-images-rvvxdnkjfy-0-202405290001.webp",
-      oldPrice: 79.99,
-      newPrice: 49.99,
-      rating: 4.5,
-      inStock: true,
-    },
-  
-  ];
+  // Navigate to product detail page
+  const handleProductClick = (productId) => {
+    navigate(`/product/${productId}`);
+  };
 
-  // ⭐ Render stars
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch('http://localhost:4000/api/products?limit=24');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        const list = json.data || json;
+        setProducts(list);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching products (List2):', err);
+        setError('Failed to load products');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
   const renderStars = (rating) => {
     const stars = [];
-    const fullStars = Math.floor(rating);
-    const hasHalf = rating % 1 !== 0;
-    for (let i = 0; i < 5; i++) {
-      if (i < fullStars) stars.push(<FaStar key={i} className="text-warning" />);
-      else if (i === fullStars && hasHalf)
+    for (let i = 1; i <= 5; i++) {
+      if (i <= rating)
         stars.push(<FaStar key={i} className="text-warning opacity-50" />);
       else stars.push(<FaRegStar key={i} className="text-muted" />);
     }
@@ -129,6 +73,22 @@ const List2 = () => {
   const getDiscountPercent = (oldPrice, newPrice) => {
     const discount = ((oldPrice - newPrice) / oldPrice) * 100;
     return Math.round(discount);
+  };
+
+  // Truncate description to 8 words
+  const truncateWords = (text, wordLimit = 8) => {
+    if (!text) return '';
+    const words = text.split(/\s+/);
+    if (words.length <= wordLimit) return text;
+    return words.slice(0, wordLimit).join(' ') + '...';
+  };
+
+  // Truncate product name to 3 words
+  const truncateName = (text) => {
+    if (!text) return '';
+    const words = text.split(/\s+/);
+    if (words.length <= 3) return text;
+    return words.slice(0, 3).join(' ') + '...';
   };
 
   return (
@@ -165,38 +125,60 @@ const List2 = () => {
 
               {/* Products Grid */}
               <div className="productsGrid mt-3">
-                {products.map((item) => (
-                  <div key={item.id} className="productCard shadow-sm rounded-lg ">
-                    <div className='imgWrapper overflow-hidden position-relative'>
-                      <img src={item.img} alt={item.name} className="img-fluid w-100" />
-                      <span className="discountBadge">
-                        {getDiscountPercent(item.oldPrice, item.newPrice)} % OFF
-                      </span>
-                      <div className="imageIcons">
-                        <span className="iconBox" onClick={() => handleOpenModal(item)} ><RxExitFullScreen /></span>
-                        <span className="iconBox"><IoMdHeartEmpty /></span>
-                      </div>
-                    </div>
+                {loading ? (
+                  <div className="p-4">Loading products...</div>
+                ) : error ? (
+                  <div className="p-4 text-danger">{error}</div>
+                ) : products.length === 0 ? (
+                  <div className="p-4">No products available</div>
+                ) : (
+                  products.map((item) => {
+                    const oldPrice = item.oldPrice ?? ((item.price ?? 0) * 1.2);
+                    const newPrice = item.newPrice ?? (item.price ?? 0);
+                    const imgSrc = item.images && item.images.length ? item.images[0].url : (item.img || pro);
+                    const desc = truncateWords(item.description || item.desc || '');
+                    const name = truncateName(item.name || '');
+                    const inStock = (item.countInStock ?? item.inStock ?? 0) > 0;
+                    const rating = item.rating ?? 0;
+                    return (
+                      <div 
+                        key={item._id || item.id} 
+                        className="productCard shadow-sm rounded-lg"
+                        onClick={() => handleProductClick(item._id || item.id)}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <div className='imgWrapper overflow-hidden position-relative'>
+                          <img src={imgSrc} alt={item.name} className="img-fluid w-100" />
+                          <span className="discountBadge">
+                            {getDiscountPercent(oldPrice, newPrice)} % OFF
+                          </span>
+                          <div className="imageIcons">
+                            <span className="iconBox" onClick={(e) => { e.stopPropagation(); handleOpenModal(item); }} ><RxExitFullScreen /></span>
+                            <span className="iconBox"><IoMdHeartEmpty /></span>
+                          </div>
+                        </div>
 
-                    <div className='card-body text-start px-3'>
-                      <h6 className='card-title mb-1 fw-bold'>{item.name}</h6>
-                      <p className='text-muted small mb-1'>{item.desc}</p>
+                        <div className='card-body text-start px-3'>
+                          <h6 className='card-title mb-1 fw-bold'>{name}</h6>
+                          <p className='text-muted small mb-1'>{desc}</p>
 
-                      <div className={`stockStatus ${item.inStock ? 'inStock' : 'outStock'}`}>
-                        {item.inStock ? "In Stock" : "Out of Stock"}
-                      </div>
+                          <div className={`stockStatus ${inStock ? 'inStock' : 'outStock'}`}>
+                            {inStock ? "In Stock" : "Out of Stock"}
+                          </div>
 
-                      <div className='rating mb-2'>
-                        {renderStars(item.rating)}
-                      </div>
+                          <div className='rating mb-2'>
+                            {renderStars(rating)}
+                          </div>
 
-                      <div className='priceBox mt-1'>
-                        <span className='oldPrice me-2'>${item.oldPrice.toFixed(2)}</span>
-                        <span className='newPrice ml-3'>${item.newPrice.toFixed(2)}</span>
+                          <div className='priceBox mt-1'>
+                            <span className='oldPrice me-2'>${oldPrice.toFixed(2)}</span>
+                            <span className='newPrice ml-3'>${newPrice.toFixed(2)}</span>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                ))}
+                    );
+                  })
+                )}
               </div>
               <div className='d-flex mt-4 mb-5 bannerSec'>
                   <div className="banner shadow-sm rounded overflow-hidden">
