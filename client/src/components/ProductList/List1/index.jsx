@@ -175,33 +175,34 @@ const List1 = () => {
               </div>
                   <Box className="featuredTabs" sx={{ ml: 'auto', maxWidth: { xs: 320,  sm: 520 } }}>
                   {categories.length > 0 ? (
-      categories.map((cat) => (
-        <Tab 
-          key={cat._id} 
-          label={cat.name} 
-          sx={{
-            fontWeight: 600,
-            fontSize: '14px',
-            textTransform: 'none',
-            color: '#006970',
-            '&.Mui-selected': {
-              color: '#006970',
-              fontWeight: 700
-            }
-          }}
-        />
-      ))
-                        ) : (
-                      [
-                        <Tab key="1" label="Item One" sx={{ color: '#006970' }} />,
-                        <Tab key="2" label="Item Two" sx={{ color: '#006970' }} />,
-                        <Tab key="3" label="Item Three" sx={{ color: '#006970' }} />,
-                        <Tab key="4" label="Item Four" sx={{ color: '#006970' }} />,
-                        <Tab key="5" label="Item Five" sx={{ color: '#006970' }} />,
-                        <Tab key="6" label="Item Six" sx={{ color: '#006970' }} />,
-                        <Tab key="7" label="Item Seven" sx={{ color: '#006970' }} />
-                      ]
-                    )}
+                  categories.map((cat) => (
+                      <Tab 
+                        key={cat._id} 
+                        label={cat.name} 
+                        sx={{
+                          fontWeight: 600,
+                          fontSize: '14px',
+                          textTransform: 'none',
+                          color: '#006970',
+                          '&.Mui-selected': {
+                            color: '#006970',
+                            fontWeight: 700
+                          }
+                        }}
+                      />
+                    ))
+                  ) : (
+                    [
+                      <Tab key="1" label="Item One" sx={{ color: '#006970' }} />,
+                      <Tab key="2" label="Item Two" sx={{ color: '#006970' }} />,
+                      <Tab key="3" label="Item Three" sx={{ color: '#006970' }} />,
+                      <Tab key="4" label="Item Four" sx={{ color: '#006970' }} />,
+                      <Tab key="5" label="Item Five" sx={{ color: '#006970' }} />,
+                      <Tab key="6" label="Item Six" sx={{ color: '#006970' }} />,
+                      <Tab key="7" label="Item Seven" sx={{ color: '#006970' }} />
+                    ]
+                  )}
+                                    
               </Box>
             </div>
 

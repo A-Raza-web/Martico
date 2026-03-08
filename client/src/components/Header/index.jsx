@@ -1,4 +1,4 @@
-import {Link, useLocation} from 'react-router-dom';
+import {Link, useLocation, useNavigate} from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import logo from '../../assets/images/logo11.png'
 import Countrydorp from '../CountryDropdown';
@@ -20,6 +20,7 @@ import Navigation from './Navigation'
 
 const Header = ()=>{
   const location = useLocation();
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
@@ -48,6 +49,21 @@ const Header = ()=>{
     localStorage.removeItem('user');
     setUser(null);
     handleClose();
+  };
+
+  const handleProfile = () => {
+    handleClose();
+    navigate('/profile');
+    setTimeout(() => {
+      if (window.location.pathname.toLowerCase() !== '/profile') {
+        window.location.assign('/profile');
+      }
+    }, 0);
+  };
+
+  const handleOrders = () => {
+    handleClose();
+    window.location.assign('/orders');
   };
 
   return (
@@ -87,19 +103,19 @@ const Header = ()=>{
                                       <div style={{ fontSize: '0.85rem', color: '#666' }}>{user.email}</div>
                                     </div>
                                     <Divider />
-                                    <MenuItem onClick={handleClose}>
+                                    <MenuItem onClick={handleProfile}>
                                       <ListItemIcon>
                                         <Person fontSize="small" />
                                       </ListItemIcon>
                                       Profile
                                     </MenuItem>
-                                    <MenuItem onClick={handleClose}>
+                                    <MenuItem onClick={handleProfile}>
                                       <ListItemIcon>
                                         <AccountCircle fontSize="small" />
                                       </ListItemIcon>
                                       My Account
                                     </MenuItem>
-                                    <MenuItem onClick={handleClose}>
+                                    <MenuItem onClick={handleOrders}>
                                       <ListItemIcon>
                                         <LocalShipping fontSize="small" />
                                       </ListItemIcon>

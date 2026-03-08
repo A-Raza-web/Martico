@@ -8,6 +8,8 @@ import ProductDetails from './pages/ProductDetails';
 import Card from "./pages/Card";
 import Footer from './components/Footer';
 import AuthForm from './pages/AuthForm';
+import Profile from './pages/Profile';
+import Orders from './pages/Orders';
 
 function App() {
   return (
@@ -20,7 +22,7 @@ function App() {
 function AppRoutes() {
   const location = useLocation();
   const path = location.pathname.toLowerCase();
-  const hideOn = ['/signin', '/signup'];
+  const hideOn = ['/signin', '/signup', '/profile', '/orders', '/order'];
   const showHeaderFooter = !hideOn.includes(path);
 
   return (
@@ -31,6 +33,9 @@ function AppRoutes() {
         <Route path='/cat/:id' element={<Listing/>} />
         <Route path='/product/:id' element={<ProductDetails/>} />
         <Route path='/card' element={<Card/>} />
+        <Route path='/profile' element={<Profile/>} />
+        <Route path='/orders' element={<Orders/>} />
+        <Route path='/order' element={<Orders/>} />
         <Route path='/signIn' element={<AuthForm />} />
         <Route path='/signUp' element={<AuthForm />} />
       </Routes>

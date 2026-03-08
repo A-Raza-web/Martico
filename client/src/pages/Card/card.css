@@ -19,6 +19,20 @@
 .cardProductItem .info h6{ color: #343434; font-weight: bold; }
 .cardProductItem .info h6:hover{ color: #ed174a; }
 .text-red{color: #ed174a !important;}
+.cartAlert{
+  color: #8a1f1f;
+  background: #fde8e8;
+  border: 1px solid #f4c7c7;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-weight: 600;
+}
+.cartStateCell{
+  text-align: center;
+  color: #4b5563;
+  font-weight: 600;
+  padding: 22px !important;
+}
 .cart-list{ display:flex; flex-direction:column; gap:12px; }
 .cart-item{ background: #fff; border: 1px solid #eee; padding:12px; border-radius:8px; align-items:center; gap:12px; }
 .cart-item:hover{ box-shadow: 0 6px 18px rgba(37,37,37,0.06); }
@@ -51,6 +65,16 @@
 }
 .fond-weight{
   font-weight: 600;
+}
+.qtyReadOnly{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid rgba(0,0,0,0.2);
+  font-weight: 700;
 }
 
 .cardDetail{
